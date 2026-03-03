@@ -24,4 +24,12 @@ Zenith M&B es una aplicación para android de bienestar que busca ayudar al usua
 - Configuración de tiempos de entrenamientos y descansos.
 - Visualización y configuración de cronometro durante el tiempo de entrenamiento.
 
-## Restricciones Tecnicas
+## Aplicación
+
+La aplicación está pensada para usarse en dispositivos Android con las siguientes restricciones técnicas:
+
+- Zenith funcionará con dispositivos **Android 13 - API 33** o superior.
+- Todos los datos de la aplicación se guardarán en el propio dispositivo del usuario, todo se almacenará de manera local gracias a la librería de **ROOM** ofrecida por Android.
+- Como los datos se almacenan localmente, la aplicación debe permitir la creación, lectura, actualización y eliminación de datos del usuario **(CRUD)**
+- Personalización, la aplicación permite la selección de cuatro temas de personalización para dar más cercanía al usuario, los temas a escoger son: Classic *(tema claro)*, Dark *(tema oscuro)*, Dark Pink *(tema oscuro)*, Gold & Esmeralds *(tema claro)*.
+- Accesibilidad, la aplicación también ofrecerá la posibilidad de cambiar el tamaño de la letra (pequeña, mediana y grande)  para ser más legible la información mostrada.
