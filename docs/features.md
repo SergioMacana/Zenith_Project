@@ -34,4 +34,4 @@ La aplicación está pensada para usarse en dispositivos Android con las siguien
 - Personalización, la aplicación permite la selección de cuatro temas de personalización para dar más cercanía al usuario, los temas a escoger son: Classic *(tema claro)*, Dark *(tema oscuro)*, Dark Pink *(tema oscuro)*, Gold & Esmeralds *(tema claro)*.
 - Accesibilidad, la aplicación también ofrecerá la posibilidad de cambiar el tamaño de la letra (pequeña, mediana y grande)  para ser más legible la información mostrada.
 
-![Pantalla Home con temas](iamges/Diseno_Pantallas_temas.png)
+![Pantalla Home con temas](images/Diseno_Pantallas_temas.png)
