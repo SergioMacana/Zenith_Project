@@ -44,8 +44,10 @@ Al seleccionar un estado de ánimo, aparece una ventana emergenete que le solici
 
 ![Pantalla Splash](images/Diseno_Pantalla_4_1.png)
 
-## 4.2. PPantalla Registro de estado de animo (historial)
+## 4.2. Pantalla Registro de estado de animo (historial)
 
 Al cambiar el switch, se muestra el historial de registro de estados de animo a través del tiempo, la gráfica muestra distinatas emociones y su tamaño de acuerdo a la frecuencia en la que se registran.
 
 ![Pantalla Splash](images/Diseno_Pantalla_4_2.png)
+
+
