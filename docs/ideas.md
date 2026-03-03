@@ -22,3 +22,50 @@ Pensado como un Producto Mínimo Viable, Zenith Mind & Body es una aplicación d
 * [HabitNow: Planeador de Rutinas](https://play.google.com/store/apps/details?id=com.habitnow)
 * [Sectograph: Planeador de Tiempo](https://play.google.com/store/apps/details?id=prox.lab.calclock)
 * [Moodi: Emociones y estado de ánimo](https://play.google.com/store/apps/details?id=com.moodi)
+
+Perfecto 👍 Te ayudo a estructurarlo con el mismo formato que ya tienes en tu README para que lo agregues a tu repositorio en Git.
+
+Aquí tienes el bloque listo para copiar y pegar:
+
+---
+
+## **Idea 3: TodoPulse**
+
+---
+
+### **Nombre de la aplicación:**
+
+**TodoPulse**
+
+### **Autor:**
+
+**MACIAS RODRIGUEZ DANIEL**
+
+### **Descripción:**
+
+TodoPulse es una aplicación móvil Android para la gestión de tareas personales, desarrollada como proyecto académico. La aplicación permite crear, editar, eliminar y organizar tareas de manera eficiente, clasificándolas en secciones inteligentes como:
+
+* **Hoy**
+* **Próximos días**
+* **Algún día**
+
+Esto facilita la priorización, organización y seguimiento de actividades diarias, mejorando la productividad personal del usuario.
+
+### **Aplicaciones similares:**
+
+* **Todoist**
+* **Microsoft To Do**
+* **TickTick**
+
+---
+
+Si quieres, también puedo ayudarte a:
+
+* Mejorar la descripción para que suene más profesional.
+* Redactar la justificación del proyecto.
+* Crear los objetivos general y específicos.
+* Armar la sección de tecnologías (por ejemplo: Kotlin, Android Studio, Room, MVVM, etc.).
+* Unificar TodoPulse con la idea de Zenith M&B si quieres mantener una línea temática.
+
+¿Este proyecto lo vas a presentar como reemplazo de Zenith M&B o como una tercera opción?
+
