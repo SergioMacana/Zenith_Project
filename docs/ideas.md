@@ -48,9 +48,9 @@ Esto facilita la priorización, organización y seguimiento de actividades diari
 
 ### **Aplicaciones similares:**
 
-* **Todoist**
-* **Microsoft To Do**
-* **TickTick**
+* [Todoist](https://www.todoist.com/es)
+* [Microsoft To Do](https://to-do.office.com/tasks/)
+* [TickTick](https://ticktick.com/)
 
 ---
 
