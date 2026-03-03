@@ -54,5 +54,4 @@ Esto facilita la priorización, organización y seguimiento de actividades diari
 
 ---
 
-¿Este proyecto lo vas a presentar como reemplazo de Zenith M&B o como una tercera opción?
 
