@@ -5,3 +5,6 @@ Pensado como un Producto Mínimo Viable, Zenith Mind & Body es una aplicación p
 <div align="center">
   <img src="docs/images/Logo_App.png" alt="Logo de Zenith" />
 </div>
+
+## Autores:
+Eider Agreda, Sergio Macana y Daniel Macias
