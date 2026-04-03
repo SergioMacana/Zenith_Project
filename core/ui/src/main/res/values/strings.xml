@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="name_app">Zenith M&amp;B</string>
+    <string name="slogan_app">Bienestar en tus manos</string>
+    <!-- Configuración inicial -->
+    <string name="config_inicial">Configuración Inicial</string>
+    <string name="name_ask">¿Cuál es tu nombre?</string>
+    <string name="name_input">Ingresa tu nombre</string>
+    <string name="size_text">Tamaño de texto</string>
+    <string name="small">Pequeña</string>
+    <string name="medium">Mediana</string>
+    <string name="big">Grande</string>
+    <string name="theme_app">Tema de la aplicación</string>
+    <string name="Theme_1">Classic</string>
+    <string name="Theme_2">Dark Classic</string>
+    <string name="Theme_3">Dark Pink</string>
+    <string name="Theme_4">Gold &amp; Esmeralds</string>
+    <string name="save_continue">Guardar y Contiuar</string>
+    <!-- Pantalla Home -->
+    <string name="welcome_message">¡Hola, Usuario!</string>
+    <string name="today">Hoy</string>
+    <string name="title_card_moody">Tus emociones</string>
+    <string name="card_moody">¿Cómo te has sentido hoy?</string>
+    <string name="title_card_tasks">Hábitos y tareas</string>
+    <string name="new_task">Nueva tarea</string>
+    <string name="task_details">Crea una nueva tarea, recordatorio o rutina</string>
+    <string name="go">ir</string>
+    <string name="confirm">Confirmar</string>
+    <string name="title_card_fitness">Entrenamiento</string>
+    <string name="card_fitness">Activate hoy, empieza con un ejercicio</string>
+    <!-- Pantalla Home - Config -->
+    <string name="version">versión 1.0.0</string>
+    <string name="button_text_size">Accesibilidad</string>
+    <string name="button_select_theme">Cambiar tema</string>
+    <string name="about">Acerca de</string>
+    <!-- Pantalla Home - Notif -->
+    <string name="notification">Notificaciones</string>
+    <string name="check_notif">Leída</string>
+    <!-- Pantalla Moody -->
+    <string name="title_moody_1">¿Cómo te sientes, David?</string>
+    <string name="title_moody_2">Así es cómo te has sentido, David</string>
+    <string name="switch_opc1">Registra</string>
+    <string name="switch_opc2">Historial</string>
+    <string name="opc_day">Día </string>
+    <string name="opc_week">Semana </string>
+    <string name="opc_month">Mes </string>
+    <string name="Dialog_Moody">Describe cómo te sientes </string>
+    <string name="text_field_moody">Escribe cómo y qué te hace sentir así (opcional) </string>
+    <string name="button_save">Guardar </string>
+    <!-- Pantalla Tasks -->
+    <string name="title_tasks_1">¿Qué vas a hacer hoy?</string>
+    <string name="title_tasks_2">Actividades de este mes</string>
+    <string name="Dialog_taks1">Editar Tarea</string>
+    <string name="Dialog_task2">¿Comfirmar tarea realizada?</string>
+    <string name="text_field_task1">Escribe el título de tu actividad </string>
+    <string name="text_field_task2">Detalla tu actividad </string>
+    <string name="button_cancel">Cancelar </string>
+    <string name="button_delete">Eliminar </string>
+    <!-- Pantalla Fitness -->
+    <string name="title_fitness">Continua con tu rutina</string>
+    <string name="subtitle_fitness">Ejercicios disponibles</string>
+    <!-- Pantalla Fitness - training-->
+    <string name="subtitle_training">Detalles</string>
+    <string name="series">Series</string>
+    <string name="reps">Reps</string>
+    <string name="workout">Entreno</string>
+    <string name="rest">Descarso</string>
+    <string name="button_stop">Detener</string>
+    <string name="button_restart">Reiniciar</string>
+    <string name="progress">Progreso</string>
+    <string name="series_progress">Serie</string>
+    <string name="reps_progress">Repetición</string>
+    <string name="dialog_training">Editar rutina</string>
+    <string name="dialog_series">Series: </string>
+    <string name="dialog_reps">Respeticiones: </string>
+    <string name="dialog_time_training">Tiempo de entreno: </string>
+    <string name="dialog_time_rest">Tiempo de descanso: </string>
+</resources>

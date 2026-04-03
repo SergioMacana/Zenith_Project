@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Gold & Esmerald -->
+    <color name="gold_primary_bg">#EFE7C2</color>
+    <color name="gold_secondary_bg">#E4D9A8</color>
+
+    <color name="gold_accent_1">#F3BE32</color>
+    <color name="gold_accent_2">#EB942A</color>
+    <color name="gold_accent_3">#384A34</color>
+    <color name="gold_accent_4">#27291E</color>
+
+    <color name="gold_text_primary">#FFF4EB</color>
+    <color name="gold_text_secondary">#2A2A2A</color>
+
+    <color name="gold_preview_accent">#384A34</color>
+</resources>

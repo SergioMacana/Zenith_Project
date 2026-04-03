@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Clásico (light) -->
+    <color name="classic_primary_bg">#FFF4EB</color>
+    <color name="classic_secondary_bg">#FFF0EC</color>
+
+    <!-- Acentos / paleta -->
+    <color name="classic_accent_1">#89C892</color>
+    <color name="classic_accent_2">#FDFB91</color>
+    <color name="classic_accent_3">#8BBFFD</color>
+    <color name="classic_accent_4">#D46257</color>
+
+    <!-- Texto -->
+    <color name="classic_text_primary">#FFF4EB</color>
+    <color name="classic_text_secondary">#2A2A2A</color>
+
+    <!-- Preview / highlight -->
+    <color name="classic_preview_accent">#FDFB91</color>
+</resources>

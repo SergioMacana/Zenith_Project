@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Low Pink -->
+    <color name="lowpink_primary_bg">#2A2A2A</color>
+    <color name="lowpink_secondary_bg">#2E2E2E</color>
+
+    <color name="lowpink_accent_1">#F2E8F3</color>
+    <color name="lowpink_accent_2">#F4BAD0</color>
+    <color name="lowpink_accent_3">#CEA5E1</color>
+    <color name="lowpink_accent_4">#FB859B</color>
+
+    <color name="lowpink_text_primary">#FFF4EB</color>
+    <color name="lowpink_text_secondary">#2A2A2A</color>
+
+    <color name="lowpink_preview_accent">#FB859B</color>
+</resources>

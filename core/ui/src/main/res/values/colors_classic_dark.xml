@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Clásico oscuro -->
+    <color name="classic_dark_primary_bg">#2A2A2A</color>
+    <color name="classic_dark_secondary_bg">#2E2E2E</color>
+
+    <!-- Acentos -->
+    <color name="classic_dark_accent_1">#5DA580</color>
+    <color name="classic_dark_accent_2">#F7C64D</color>
+    <color name="classic_dark_accent_3">#30519E</color>
+    <color name="classic_dark_accent_4">#A82E30</color>
+
+    <!-- Texto -->
+    <color name="classic_dark_text_primary">#FFF4EB</color>
+    <color name="classic_dark_text_secondary">#2A2A2A</color>
+
+    <color name="classic_dark_preview_accent">#F7C64D</color>
+</resources>
