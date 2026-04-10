@@ -7,12 +7,12 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.13.0"
 kotlin = "2.2.0"
-composeBom = "2026.03.00"
+composeBom = "2026.03.01"
 jetbrainsKotlinJvm = "2.2.10"
 navigationRuntimeKtx = "2.9.7"
 navigationCompose = "2.9.7"
 
-materialIcons = "1.6.0"
+materialIcons = "1.7.8"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
