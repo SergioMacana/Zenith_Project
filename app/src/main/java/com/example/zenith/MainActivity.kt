@@ -4,11 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import com.example.ui.di.SettingsViewModelFactory
+import com.example.ui.viewmodel.SettingsViewModel
 import com.example.zenith.ui.navigation.AppNavHost
 import com.example.zenith.ui.theme.ZenithTheme
 
@@ -18,27 +19,23 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
 
+            val settingsViewModel: SettingsViewModel = viewModel(
+                factory = SettingsViewModelFactory(applicationContext)
+            )
+
+            val settingsState by settingsViewModel.settingsState.collectAsState()
+
             val navController = rememberNavController()
 
-            ZenithTheme {
-                AppNavHost(navController = navController)
+            ZenithTheme(
+                selectedTheme = settingsState.theme,
+                selectedFontSize = settingsState.fontSize
+            ) {
+                AppNavHost(
+                    navController = navController,
+                    settingsViewModel = settingsViewModel
+                )
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    ZenithTheme {
-        Greeting("Android")
     }
 }

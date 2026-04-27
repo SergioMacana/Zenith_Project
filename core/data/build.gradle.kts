@@ -24,4 +24,5 @@ kotlin {
 
 dependencies {
     implementation(project(":core:domain"))
+    implementation(libs.coroutines.android)
 }

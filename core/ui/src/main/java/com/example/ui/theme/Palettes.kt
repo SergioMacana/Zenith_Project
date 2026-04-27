@@ -3,6 +3,7 @@ package com.example.ui.theme
 import androidx.annotation.ColorRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.colorResource
+import com.example.domain.preferences.AppTheme
 import com.example.ui.R
 
 @Composable

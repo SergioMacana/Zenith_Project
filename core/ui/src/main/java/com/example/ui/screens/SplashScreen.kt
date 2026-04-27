@@ -27,12 +27,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.ui.R
-import com.example.ui.theme.AppTheme
 import com.example.ui.theme.LocalZenithColors
-import com.example.ui.theme.ZenithColors
 import com.example.ui.theme.autoText
-import com.example.ui.theme.paletteFor
-import com.example.ui.theme.toThemeOption
 import kotlinx.coroutines.delay
 
 @Composable

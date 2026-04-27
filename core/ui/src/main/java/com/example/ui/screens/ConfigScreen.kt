@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,17 +27,34 @@ import com.example.ui.components.AppHeader
 import com.example.ui.components.AppTextField
 import com.example.ui.components.SizeButton
 import com.example.ui.components.ThemeSelector
-import com.example.ui.theme.AppTheme
+import com.example.domain.preferences.AppTheme
+import com.example.domain.preferences.FontSizeOption
 import com.example.ui.theme.LocalZenithColors
 import com.example.ui.theme.autoText
 import com.example.ui.theme.toThemeOption
+import com.example.ui.viewmodel.SettingsViewModel
 
 @Composable
 fun ConfigScreen(
+    settingsViewModel: SettingsViewModel,
     onNext: () -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    var selectedSize by remember { mutableStateOf("medium") }
+
+    val settingsState by settingsViewModel.settingsState.collectAsState()
+
+    var name by remember(settingsState.userName) {
+        mutableStateOf(settingsState.userName)
+    }
+
+    var selectedSize by remember(settingsState.fontSize) {
+        mutableStateOf(
+            when (settingsState.fontSize) {
+                FontSizeOption.SMALL -> "small"
+                FontSizeOption.MEDIUM -> "medium"
+                FontSizeOption.LARGE -> "big"
+            }
+        )
+    }
 
     val sizes = listOf("small", "medium", "big")
 
@@ -45,7 +63,11 @@ fun ConfigScreen(
 
     val themes = AppTheme.values().map { it.toThemeOption() }
 
-    var selectedTheme by remember { mutableStateOf(themes.first()) }
+    var selectedTheme by remember(settingsState.theme) {
+        mutableStateOf(
+            themes.first { it.appTheme == settingsState.theme }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -131,7 +153,21 @@ fun ConfigScreen(
             SizeButton(
                 text = stringResource(id = R.string.save_continue),
                 isSelected = true,
-                onClick = onNext,
+                onClick = {
+                    val fontOption = when (selectedSize) {
+                        "small" -> FontSizeOption.SMALL
+                        "medium" -> FontSizeOption.MEDIUM
+                        else -> FontSizeOption.LARGE
+                    }
+
+                    settingsViewModel.saveInitialSettings(
+                        userName = name,
+                        theme = selectedTheme.appTheme,
+                        fontSize = fontOption
+                    )
+
+                    onNext()
+                },
                 modifier = Modifier.width(180.dp)
             )
 

@@ -9,7 +9,7 @@ kotlin {
 }
 
 dependencies {
-    // SOLO Kotlin puro (nada más)
+    implementation(libs.coroutines.android)
 }
 
 java {

@@ -1,4 +1,4 @@
-package com.example.ui.theme
+package com.example.domain.preferences
 
 enum class AppTheme {
     CLASSIC,

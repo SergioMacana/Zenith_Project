@@ -4,6 +4,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import com.example.domain.preferences.AppTheme
+import com.example.domain.preferences.FontSizeOption
 
 @Composable
 fun AppTheme(

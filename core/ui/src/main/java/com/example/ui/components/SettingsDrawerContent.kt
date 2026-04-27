@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,18 +23,36 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.ui.R
-import com.example.ui.theme.AppTheme
+import com.example.domain.preferences.AppTheme
+import com.example.domain.preferences.FontSizeOption
 import com.example.ui.theme.LocalZenithColors
 import com.example.ui.theme.autoText
 import com.example.ui.theme.toThemeOption
+import com.example.ui.viewmodel.SettingsViewModel
 
 @Composable
-fun SettingsDrawerContent() {
+fun SettingsDrawerContent(
+    settingsViewModel: SettingsViewModel
+) {
+    val settingsState by settingsViewModel.settingsState.collectAsState()
+
     val sizes = listOf("small", "medium", "big")
-    var selectedSize by remember { mutableStateOf("medium") }
+    var selectedSize by remember(settingsState.fontSize) {
+        mutableStateOf(
+            when (settingsState.fontSize) {
+                FontSizeOption.SMALL -> "small"
+                FontSizeOption.MEDIUM -> "medium"
+                FontSizeOption.LARGE -> "big"
+            }
+        )
+    }
 
     val themes = AppTheme.values().map { it.toThemeOption() }
-    var selectedTheme by remember { mutableStateOf(themes.first()) }
+    var selectedTheme by remember(settingsState.theme) {
+        mutableStateOf(
+            themes.first { it.appTheme == settingsState.theme }
+        )
+    }
 
     val colors = LocalZenithColors.current
     val textColor = colors.autoText(MaterialTheme.colorScheme.background)
@@ -77,7 +96,17 @@ fun SettingsDrawerContent() {
                             }
                         ),
                         isSelected = selectedSize == size,
-                        onClick = { selectedSize = size },
+                        onClick = {
+                            selectedSize = size
+
+                            val fontOption = when (size) {
+                                "small" -> FontSizeOption.SMALL
+                                "medium" -> FontSizeOption.MEDIUM
+                                else -> FontSizeOption.LARGE
+                            }
+
+                            settingsViewModel.updateFontSize(fontOption)
+                        },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -88,7 +117,10 @@ fun SettingsDrawerContent() {
             ThemeSelector(
                 themes = themes,
                 selectedTheme = selectedTheme,
-                onThemeSelected = { selectedTheme = it },
+                onThemeSelected = {
+                    selectedTheme = it
+                    settingsViewModel.updateTheme(it.appTheme)
+                },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
             )
         }

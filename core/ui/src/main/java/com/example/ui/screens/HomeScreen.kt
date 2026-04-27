@@ -33,9 +33,11 @@ import com.example.ui.components.TaskCarousel
 import com.example.ui.components.TodayCard
 import com.example.ui.theme.LocalZenithColors
 import com.example.ui.theme.autoText
+import com.example.ui.viewmodel.SettingsViewModel
 
 @Composable
 fun HomeScreen(
+    settingsViewModel: SettingsViewModel,
     onGoToMood: () -> Unit,
     onGoToTasks: () -> Unit,
     onGoToFitness: () -> Unit
@@ -117,7 +119,9 @@ fun HomeScreen(
             isOpen = isLeftPanelOpen,
             onClose = { isLeftPanelOpen = false }
         ) {
-            SettingsDrawerContent()
+            SettingsDrawerContent(
+                settingsViewModel = settingsViewModel
+            )
         }
 
         RightDrawer(

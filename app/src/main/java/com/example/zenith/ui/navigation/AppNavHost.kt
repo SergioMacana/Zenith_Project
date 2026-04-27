@@ -1,6 +1,7 @@
 package com.example.zenith.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -14,9 +15,15 @@ import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.MoodScreen
 import com.example.ui.screens.TasksScreen
 import com.example.ui.screens.TrainingScreen
+import com.example.ui.viewmodel.SettingsViewModel
 
 @Composable
-fun AppNavHost(navController: NavHostController) {
+fun AppNavHost(
+    navController: NavHostController,
+    settingsViewModel: SettingsViewModel
+){
+
+    val settingsState by settingsViewModel.settingsState.collectAsState()
 
     var selectedExercise by remember { mutableStateOf("") }
 
@@ -28,7 +35,13 @@ fun AppNavHost(navController: NavHostController) {
         composable(NavRoutes.Splash.route) {
             SplashScreen(
                 onNavigateNext = {
-                    navController.navigate(NavRoutes.Config.route) {
+                    val destination = if (settingsState.isFirstLaunch) {
+                        NavRoutes.Config.route
+                    } else {
+                        NavRoutes.Home.route
+                    }
+
+                    navController.navigate(destination) {
                         popUpTo(NavRoutes.Splash.route) { inclusive = true }
                     }
                 }
@@ -37,14 +50,18 @@ fun AppNavHost(navController: NavHostController) {
 
         composable(NavRoutes.Config.route) {
             ConfigScreen(
+                settingsViewModel = settingsViewModel,
                 onNext = {
-                    navController.navigate(NavRoutes.Home.route)
+                    navController.navigate(NavRoutes.Home.route) {
+                        popUpTo(NavRoutes.Config.route) { inclusive = true }
+                    }
                 }
             )
         }
 
         composable(NavRoutes.Home.route) {
             HomeScreen(
+                settingsViewModel = settingsViewModel,
                 onGoToMood = {
                     navController.navigate(NavRoutes.Mood.route)
                 },
