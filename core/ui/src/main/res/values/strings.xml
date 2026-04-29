@@ -17,7 +17,7 @@
     <string name="Theme_4">Gold &amp; Esmeralds</string>
     <string name="save_continue">Guardar y Contiuar</string>
     <!-- Pantalla Home -->
-    <string name="welcome_message">¡Hola, Usuario!</string>
+    <string name="welcome_message">¡Hola, %1$s!</string>
     <string name="today">Hoy</string>
     <string name="title_card_moody">Tus emociones</string>
     <string name="card_moody">¿Cómo te has sentido hoy?</string>
@@ -37,8 +37,8 @@
     <string name="notification">Notificaciones</string>
     <string name="check_notif">Leída</string>
     <!-- Pantalla Moody -->
-    <string name="title_moody_1">¿Cómo te sientes, David?</string>
-    <string name="title_moody_2">Así es cómo te has sentido, David</string>
+    <string name="title_moody_1">¿Cómo te sientes</string>
+    <string name="title_moody_2">Así es cómo te has sentido,</string>
     <string name="switch_opc1">Registra</string>
     <string name="switch_opc2">Historial</string>
     <string name="opc_day">Día </string>

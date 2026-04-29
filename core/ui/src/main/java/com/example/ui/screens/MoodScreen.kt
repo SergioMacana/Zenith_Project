@@ -30,6 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,22 +44,31 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.domain.catalog.MoodEmoji
+import com.example.domain.catalog.MoodEmojiCatalog
+import com.example.domain.model.MoodMosaicItem
 import com.example.ui.R
 import com.example.ui.components.AppTextField
 import com.example.ui.components.BaseSwitchScreen
 import com.example.ui.components.SizeButton
 import com.example.ui.theme.LocalZenithColors
 import com.example.ui.theme.autoText
+import com.example.ui.viewmodel.MoodViewModel
+import com.example.ui.viewmodel.SettingsViewModel
 
 @Composable
 fun MoodScreen(
+    moodViewModel: MoodViewModel,
+    settingsViewModel: SettingsViewModel,
     onBack: () -> Unit
 ) {
+    val settingsState by settingsViewModel.settingsState.collectAsState()
+
     var selectedIndex by remember { mutableStateOf(0) }
 
     val titles = listOf(
-        stringResource(R.string.title_moody_1),
-        stringResource(R.string.title_moody_2)
+        "${stringResource(R.string.title_moody_1)} ${settingsState.userName.ifBlank { "Usuario" }}?",
+        "${stringResource(R.string.title_moody_2)} ${settingsState.userName.ifBlank { "Usuario" }}"
     )
 
     val options = listOf(stringResource(R.string.switch_opc1),
@@ -73,7 +83,17 @@ fun MoodScreen(
     ) {
         MoodContentPager(
             selectedIndex = selectedIndex,
-            onPageChanged = { selectedIndex = it }
+            onPageChanged = { selectedIndex = it },
+            onSaveMood = { moodId, moodLabel, note ->
+                moodViewModel.saveMood(
+                    moodId = moodId,
+                    moodLabel = moodLabel,
+                    note = note
+                )
+            },
+            getMosaicForPeriod = { period ->
+                moodViewModel.getMosaicForPeriod(period)
+            }
         )
     }
 }
@@ -81,7 +101,9 @@ fun MoodScreen(
 @Composable
 fun MoodContentPager(
     selectedIndex: Int,
-    onPageChanged: (Int) -> Unit
+    onPageChanged: (Int) -> Unit,
+    onSaveMood: (String, String, String) -> Unit,
+    getMosaicForPeriod: (String) -> List<MoodMosaicItem>
 ) {
     val pagerState = rememberPagerState(
         initialPage = selectedIndex,
@@ -105,49 +127,24 @@ fun MoodContentPager(
     ) { page ->
 
         when (page) {
-            0 -> MoodGridScreen()
-            1 -> MoodHistoryScreen()
+            0 -> MoodGridScreen(
+                onSaveMood = onSaveMood
+            )
+            1 -> MoodHistoryScreen(
+                getMosaicForPeriod = getMosaicForPeriod
+            )
         }
     }
 }
 
 @Composable
-fun MoodGridScreen() {
+fun MoodGridScreen(
+    onSaveMood: (moodId: String, moodLabel: String, note: String) -> Unit
+) {
     var selectedMood by remember { mutableStateOf<MoodEmoji?>(null) }
     var note by remember { mutableStateOf("") }
 
-    val moods = listOf(
-        MoodEmoji(R.drawable.emoji_feliicidad, "Feliz"),
-        MoodEmoji(R.drawable.emoji_tristesa, "Triste"),
-        MoodEmoji(R.drawable.emoji_enojo, "Enojado"),
-        MoodEmoji(R.drawable.emoji_mudo, "Mudo"),
-        MoodEmoji(R.drawable.emoji_desinteres, "Desinteres"),
-        MoodEmoji(R.drawable.emoji_contento, "Contento"),
-        MoodEmoji(R.drawable.emoji_miedo, "Ansioso"),
-        MoodEmoji(R.drawable.emoji_terror, "Asustado"),
-        MoodEmoji(R.drawable.emoji_pensativo, "Pensativo"),
-        MoodEmoji(R.drawable.emoji_aburrido, "Aburrido"),
-        MoodEmoji(R.drawable.emoji_desconfianza, "Desconfianza"),
-        MoodEmoji(R.drawable.emoji_llanto, "Llanto"),
-        MoodEmoji(R.drawable.emoji_ira, "Estresado"),
-        MoodEmoji(R.drawable.emoji_desesperanza, "Solo"),
-        MoodEmoji(R.drawable.emoji_malicia, "Malicioso"),
-        MoodEmoji(R.drawable.emoji_rencor, "Rencoroso"),
-        MoodEmoji(R.drawable.emoji_vengativo, "Vengativo"),
-        MoodEmoji(R.drawable.emoji_frustraci_n, "Frustrado"),
-        MoodEmoji(R.drawable.emoji_rechazo, "Rechazo"),
-        MoodEmoji(R.drawable.emoji_alegria, "Divertido"),
-        MoodEmoji(R.drawable.emoji_asco, "Enfermo"),
-        MoodEmoji(R.drawable.emoji_pereza, "Somnoliento"),
-        MoodEmoji(R.drawable.emoji_nerviosismo, "Preocupado"),
-        MoodEmoji(R.drawable.emoji_enamoramiento, "Romántico"),
-        MoodEmoji(R.drawable.emoji_desiluci_n, "Desilucionado"),
-        MoodEmoji(R.drawable.emoji_maldiciendo, "Maldiciendo"),
-        MoodEmoji(R.drawable.emoji_agradecimiento, "Agradecido"),
-        MoodEmoji(R.drawable.emoji_juicioso, "Juicioso"),
-        MoodEmoji(R.drawable.emoji_anonadado, "Anonadado"),
-        MoodEmoji(R.drawable.emoji_interes, "Interesado")
-    )
+    val moods = MoodEmojiCatalog.moods
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -157,7 +154,7 @@ fun MoodGridScreen() {
         items(moods) { mood ->
             MoodGridItem(
                 label = mood.label,
-                icon = mood.icon,
+                icon = moodDrawableFor(mood.id),
                 onClick = {
                     selectedMood = mood
                 }
@@ -172,6 +169,15 @@ fun MoodGridScreen() {
             onDismiss = {
                 selectedMood = null
                 note = ""
+            },
+            onSave = {
+                onSaveMood(
+                    mood.id,
+                    mood.label,
+                    note
+                )
+                selectedMood = null
+                note = ""
             }
         )
     }
@@ -180,16 +186,24 @@ fun MoodGridScreen() {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun MoodHistoryScreen() {
+fun MoodHistoryScreen(
+    getMosaicForPeriod: (String) -> List<MoodMosaicItem>
+) {
+    var selectedFilter by remember { mutableStateOf("day") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 8.dp)
     ) {
-        HistoryFilter()
+        HistoryFilter(
+            selectedFilter = selectedFilter,
+            onFilterSelected = { selectedFilter = it }
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        val mosaicItems = getMosaicForPeriod(selectedFilter)
 
         //MOSAICO
         FlowRow(
@@ -199,7 +213,7 @@ fun MoodHistoryScreen() {
             horizontalArrangement = Arrangement.spacedBy(-6.dp),
             verticalArrangement = Arrangement.spacedBy(-6.dp)
         ) {
-            fakeMoods.shuffled().forEach { mood ->
+            mosaicItems.shuffled().forEach { mood ->
 
                 val randomOffset = (-6..6).random()
                 Box(
@@ -207,7 +221,7 @@ fun MoodHistoryScreen() {
                 ) {
                     MoodBubble(
                         backgroundRes = R.drawable.empty_emoji,
-                        label = mood.label,
+                        label = mood.moodLabel,
                         size = weightToSize(mood.weight)
                     )
                 }
@@ -259,7 +273,7 @@ fun MoodBubble(
     val fontSize = when {
         size > 180.dp -> 36.sp
         size > 100.dp -> 24.sp
-        size > 50.dp -> 18.sp
+        size >= 60.dp -> 12.sp
         else -> 9.sp
     }
 
@@ -289,9 +303,10 @@ fun MoodBubble(
 }
 
 @Composable
-fun HistoryFilter() {
-
-    var selectedFilter by remember { mutableStateOf("day") }
+fun HistoryFilter(
+    selectedFilter: String,
+    onFilterSelected: (String) -> Unit
+) {
 
     val filters = listOf("day", "week", "month")
 
@@ -311,28 +326,20 @@ fun HistoryFilter() {
                     }
                 ),
                 isSelected = selectedFilter == filter,
-                onClick = { selectedFilter = filter },
+                onClick = { onFilterSelected(filter) },
                 modifier = Modifier.width(90.dp)
             )
         }
     }
 }
-data class MoodBubbleData(
-    val label: String,
-    val weight: Int
-)
 
-data class MoodEmoji(
-    @DrawableRes val icon: Int,
-    val label: String
-
-)
 @Composable
 fun MoodDialog(
     mood: MoodEmoji,
     note: String,
     onNoteChange: (String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onSave: () -> Unit
 ) {
     val colors = LocalZenithColors.current
     val textColor = colors.autoText(MaterialTheme.colorScheme.surface)
@@ -362,7 +369,7 @@ fun MoodDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Image(
-                    painter = painterResource(mood.icon),
+                    painter = painterResource(moodDrawableFor(mood.id)),
                     contentDescription = mood.label,
                     modifier = Modifier.size(120.dp)
                 )
@@ -392,7 +399,7 @@ fun MoodDialog(
                 SizeButton(
                     text = stringResource(R.string.button_save),
                     isSelected = true,
-                    onClick = onDismiss,
+                    onClick = onSave,
                     modifier = Modifier.width(120.dp)
                 )
             }
@@ -400,33 +407,48 @@ fun MoodDialog(
     }
 }
 
-val fakeMoods = listOf(
-    MoodBubbleData("Feliz", 10),
-    MoodBubbleData("Tranquilo", 8),
-    MoodBubbleData("Ansioso", 6),
-    MoodBubbleData("Cansado", 5),
-    MoodBubbleData("Motivado", 7),
-    MoodBubbleData("Enojado", 3),
-    MoodBubbleData("Pensativo", 4),
-    MoodBubbleData("Agradecido", 2),
-    MoodBubbleData("Aburrido", 1),
-    MoodBubbleData("Concentrado", 6),
-    MoodBubbleData("Estresado", 5),
-    MoodBubbleData("Optimista", 7),
-    MoodBubbleData("Asquiado", 3),
-    MoodBubbleData("Frustrado", 4),
-    MoodBubbleData("Desinteresado", 2),
-    MoodBubbleData("Perezoso", 1),
-    MoodBubbleData("Rencoroso", 6),
-    MoodBubbleData("Interesado", 5)
-)
+fun moodDrawableFor(id: String): Int {
+    return when (id) {
+        "feliicidad" -> R.drawable.emoji_feliicidad
+        "emoji_tristesa" -> R.drawable.emoji_tristesa
+        "emoji_enojo" -> R.drawable.emoji_enojo
+        "emoji_mudo" -> R.drawable.emoji_mudo
+        "emoji_desinteres" -> R.drawable.emoji_desinteres
+        "emoji_contento" -> R.drawable.emoji_contento
+        "emoji_miedo" -> R.drawable.emoji_miedo
+        "emoji_terror" -> R.drawable.emoji_terror
+        "emoji_pensativo" -> R.drawable.emoji_pensativo
+        "emoji_aburrido" -> R.drawable.emoji_aburrido
+        "emoji_desconfianza" -> R.drawable.emoji_desconfianza
+        "emoji_llanto" -> R.drawable.emoji_llanto
+        "emoji_ira" -> R.drawable.emoji_ira
+        "emoji_desesperanza" -> R.drawable.emoji_desesperanza
+        "emoji_malicia" -> R.drawable.emoji_malicia
+        "emoji_rencor" -> R.drawable.emoji_rencor
+        "emoji_vengativo" -> R.drawable.emoji_vengativo
+        "emoji_frustraci_n" -> R.drawable.emoji_frustraci_n
+        "emoji_rechazo" -> R.drawable.emoji_rechazo
+        "emoji_alegria" -> R.drawable.emoji_alegria
+        "emoji_asco" -> R.drawable.emoji_asco
+        "emoji_pereza" -> R.drawable.emoji_pereza
+        "emoji_nerviosismo" -> R.drawable.emoji_nerviosismo
+        "emoji_enamoramiento" -> R.drawable.emoji_enamoramiento
+        "emoji_desiluci_n" -> R.drawable.emoji_desiluci_n
+        "emoji_maldiciendo" -> R.drawable.emoji_maldiciendo
+        "emoji_agradecimiento" -> R.drawable.emoji_agradecimiento
+        "emoji_juicioso" -> R.drawable.emoji_juicioso
+        "emoji_anonadado" -> R.drawable.emoji_anonadado
+        "emoji_interes" -> R.drawable.emoji_interes
+        else -> R.drawable.empty_emoji
+    }
+}
 
 fun weightToSize(weight: Int): Dp {
     return when (weight) {
         in 9..10 -> 220.dp
         in 7..8 -> 180.dp
-        in 5..6 -> 100.dp
-        in 3..4 -> 50.dp
-        else -> 140.dp
+        in 5..6 -> 120.dp
+        in 3..4 -> 80.dp
+        else -> 60.dp
     }
 }

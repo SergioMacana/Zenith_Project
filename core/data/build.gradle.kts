@@ -25,4 +25,5 @@ kotlin {
 dependencies {
     implementation(project(":core:domain"))
     implementation(libs.coroutines.android)
+    implementation("com.google.code.gson:gson:2.10.1")
 }

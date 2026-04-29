@@ -16,11 +16,13 @@ import com.example.ui.screens.MoodScreen
 import com.example.ui.screens.TasksScreen
 import com.example.ui.screens.TrainingScreen
 import com.example.ui.viewmodel.SettingsViewModel
+import com.example.ui.viewmodel.MoodViewModel
 
 @Composable
 fun AppNavHost(
     navController: NavHostController,
-    settingsViewModel: SettingsViewModel
+    settingsViewModel: SettingsViewModel,
+    moodViewModel : MoodViewModel
 ){
 
     val settingsState by settingsViewModel.settingsState.collectAsState()
@@ -76,6 +78,8 @@ fun AppNavHost(
 
         composable(NavRoutes.Mood.route) {
             MoodScreen(
+                moodViewModel = moodViewModel,
+                settingsViewModel = settingsViewModel,
                 onBack = {
                     navController.popBackStack()
                 }

@@ -8,7 +8,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import com.example.ui.di.MoodViewModelFactory
 import com.example.ui.di.SettingsViewModelFactory
+import com.example.ui.viewmodel.MoodViewModel
 import com.example.ui.viewmodel.SettingsViewModel
 import com.example.zenith.ui.navigation.AppNavHost
 import com.example.zenith.ui.theme.ZenithTheme
@@ -23,6 +25,10 @@ class MainActivity : ComponentActivity() {
                 factory = SettingsViewModelFactory(applicationContext)
             )
 
+            val moodViewModel: MoodViewModel = viewModel(
+                factory = MoodViewModelFactory(applicationContext)
+            )
+
             val settingsState by settingsViewModel.settingsState.collectAsState()
 
             val navController = rememberNavController()
@@ -33,7 +39,8 @@ class MainActivity : ComponentActivity() {
             ) {
                 AppNavHost(
                     navController = navController,
-                    settingsViewModel = settingsViewModel
+                    settingsViewModel = settingsViewModel,
+                    moodViewModel = moodViewModel
                 )
             }
         }
