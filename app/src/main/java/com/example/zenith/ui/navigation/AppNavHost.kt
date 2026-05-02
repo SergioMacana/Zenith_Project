@@ -17,12 +17,14 @@ import com.example.ui.screens.TasksScreen
 import com.example.ui.screens.TrainingScreen
 import com.example.ui.viewmodel.SettingsViewModel
 import com.example.ui.viewmodel.MoodViewModel
+import com.example.ui.viewmodel.NotificationViewModel
 
 @Composable
 fun AppNavHost(
     navController: NavHostController,
     settingsViewModel: SettingsViewModel,
-    moodViewModel : MoodViewModel
+    moodViewModel : MoodViewModel,
+    notificationViewModel: NotificationViewModel
 ){
 
     val settingsState by settingsViewModel.settingsState.collectAsState()
@@ -64,6 +66,7 @@ fun AppNavHost(
         composable(NavRoutes.Home.route) {
             HomeScreen(
                 settingsViewModel = settingsViewModel,
+                notificationViewModel = notificationViewModel,
                 onGoToMood = {
                     navController.navigate(NavRoutes.Mood.route)
                 },

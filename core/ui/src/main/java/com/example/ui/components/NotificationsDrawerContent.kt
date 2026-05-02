@@ -20,16 +20,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.domain.model.NotificationItem
 import com.example.ui.R
 import com.example.ui.theme.LocalZenithColors
 import com.example.ui.theme.autoText
 
 @Composable
-fun NotificationsDrawerContent() {
+fun NotificationsDrawerContent(
+    notifications: List<NotificationItem>,
+    onMarkAsRead: (String) -> Unit
+){
 
     val colors = LocalZenithColors.current
-    var selectedIndex by remember { mutableStateOf<Int?>(null) }
-
     val textColor = colors.autoText(MaterialTheme.colorScheme.background)
 
     Column(
@@ -48,15 +50,9 @@ fun NotificationsDrawerContent() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        val notifications = listOf(
-            "Notificacion 1",
-            "Notificacion 2",
-            "Notificacion 3"
-        )
+        notifications.forEach { notification ->
 
-        notifications.forEachIndexed { index, text ->
-
-            val isSelected = selectedIndex == index
+            val isRead = notification.isRead
 
             Column {
                 Surface(
@@ -64,29 +60,46 @@ fun NotificationsDrawerContent() {
                         .fillMaxWidth()
                         .padding(vertical = 6.dp)
                         .clickable {
-                            selectedIndex = if (isSelected) null else index
+                            if (!isRead) {
+                                onMarkAsRead(notification.id)
+                            }
                         },
                     shape = RoundedCornerShape(12.dp),
-                    color = if (isSelected)
+                    color = if (isRead)
                         MaterialTheme.colorScheme.surface
                     else
                         MaterialTheme.colorScheme.primary
                 ) {
-                    Text(
-                        text = text,
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.padding(12.dp),
-                        textAlign = TextAlign.Center,
-                        color = colors.autoText(
-                            if (isSelected)
-                                MaterialTheme.colorScheme.surface
-                            else
-                                MaterialTheme.colorScheme.primary
+                    Column(
+                        modifier = Modifier.padding(12.dp)
+                    ) {
+                        Text(
+                            text = notification.title,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = colors.autoText(
+                                if (isRead)
+                                    MaterialTheme.colorScheme.surface
+                                else
+                                    MaterialTheme.colorScheme.primary
+                            )
                         )
-                    )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = notification.message,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colors.autoText(
+                                if (isRead)
+                                    MaterialTheme.colorScheme.surface
+                                else
+                                    MaterialTheme.colorScheme.primary
+                            )
+                        )
+                    }
                 }
 
-                if (isSelected) {
+                if (isRead) {
                     Text(
                         text = stringResource(R.string.check_notif),
                         style = MaterialTheme.typography.labelSmall,

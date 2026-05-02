@@ -19,7 +19,7 @@ fun LeftDrawer(
     onClose: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    val width = LocalConfiguration.current.screenWidthDp.dp * 0.5f
+    val width = LocalConfiguration.current.screenWidthDp.dp * 0.6f
 
     AnimatedVisibility(
         visible = isOpen,

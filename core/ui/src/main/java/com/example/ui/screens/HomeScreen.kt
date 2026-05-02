@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,17 +34,21 @@ import com.example.ui.components.TaskCarousel
 import com.example.ui.components.TodayCard
 import com.example.ui.theme.LocalZenithColors
 import com.example.ui.theme.autoText
+import com.example.ui.viewmodel.NotificationViewModel
 import com.example.ui.viewmodel.SettingsViewModel
 
 @Composable
 fun HomeScreen(
     settingsViewModel: SettingsViewModel,
+    notificationViewModel: NotificationViewModel,
     onGoToMood: () -> Unit,
     onGoToTasks: () -> Unit,
     onGoToFitness: () -> Unit
 ) {
     var isLeftPanelOpen by remember { mutableStateOf(false) }
     var isRightPanelOpen by remember { mutableStateOf(false) }
+
+    val notificationsState by notificationViewModel.notificationsState.collectAsState()
 
     Box(
         modifier = Modifier
@@ -93,7 +98,9 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
 
-                item { TodayCard() }
+                item { TodayCard(
+                    notifications = notificationsState
+                )}
 
                 item { MoodyCard(onClick = onGoToMood) }
 
@@ -128,7 +135,12 @@ fun HomeScreen(
             isOpen = isRightPanelOpen,
             onClose = { isRightPanelOpen = false }
         ) {
-            NotificationsDrawerContent()
+            NotificationsDrawerContent(
+                notifications = notificationsState,
+                onMarkAsRead = { id ->
+                    notificationViewModel.markAsRead(id)
+                }
+            )
         }
     }
 }

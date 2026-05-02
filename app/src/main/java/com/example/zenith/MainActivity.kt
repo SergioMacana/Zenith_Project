@@ -1,24 +1,42 @@
 package com.example.zenith
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.ui.di.MoodViewModelFactory
+import com.example.ui.di.NotificationViewModelFactory
 import com.example.ui.di.SettingsViewModelFactory
 import com.example.ui.viewmodel.MoodViewModel
+import com.example.ui.viewmodel.NotificationViewModel
 import com.example.ui.viewmodel.SettingsViewModel
 import com.example.zenith.ui.navigation.AppNavHost
 import com.example.zenith.ui.theme.ZenithTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                ReminderScheduler.scheduleDailyMoodReminder(this)
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        requestNotificationPermissionIfNeeded()
+        CleanupScheduler.scheduleDailyCleanup(this)
+
         setContent {
 
             val settingsViewModel: SettingsViewModel = viewModel(
@@ -27,6 +45,10 @@ class MainActivity : ComponentActivity() {
 
             val moodViewModel: MoodViewModel = viewModel(
                 factory = MoodViewModelFactory(applicationContext)
+            )
+
+            val notificationViewModel: NotificationViewModel = viewModel(
+                factory = NotificationViewModelFactory(applicationContext)
             )
 
             val settingsState by settingsViewModel.settingsState.collectAsState()
@@ -40,9 +62,27 @@ class MainActivity : ComponentActivity() {
                 AppNavHost(
                     navController = navController,
                     settingsViewModel = settingsViewModel,
-                    moodViewModel = moodViewModel
+                    moodViewModel = moodViewModel,
+                    notificationViewModel = notificationViewModel
                 )
             }
+        }
+    }
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                ReminderScheduler.scheduleDailyMoodReminder(this)
+            } else {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+
+        } else {
+            ReminderScheduler.scheduleDailyMoodReminder(this)
         }
     }
 }
