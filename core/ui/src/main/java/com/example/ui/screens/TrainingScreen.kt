@@ -1,5 +1,9 @@
 package com.example.ui.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -32,6 +36,8 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,47 +49,88 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.domain.model.ExerciseInfo
+import com.example.domain.model.ExerciseRoutine
+import com.example.domain.model.TrainingSessionState
 import com.example.ui.R
 import com.example.ui.components.AppFab
 import com.example.ui.components.AppHeader
 import com.example.ui.components.SizeButton
 import com.example.ui.theme.LocalZenithColors
 import com.example.ui.theme.autoText
+import com.example.ui.viewmodel.FitnessViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TrainingScreen(
-    exerciseName: String,
+    exerciseId: String,
+    fitnessViewModel: FitnessViewModel,
     onBack: () -> Unit,
     onEdit: () -> Unit = {}
 ) {
+    val selectedExercise by fitnessViewModel.selectedExercise.collectAsState()
+    val routine by fitnessViewModel.routine.collectAsState()
+    val session by fitnessViewModel.session.collectAsState()
+
     var showDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(exerciseId) {
+        fitnessViewModel.loadExercise(exerciseId)
+    }
+
+    BackHandler {
+        fitnessViewModel.onExitTraining()
+        onBack()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            fitnessViewModel.onExitTraining()
+        }
+    }
+
     Box(
         modifier = Modifier.fillMaxSize()
         .background(MaterialTheme.colorScheme.background)
     ) {
         Column {
             AppHeader(
-                title = exerciseName
+                title = selectedExercise?.title ?: "Entrenamiento"
             )
 
-            TrainingContent()
+            TrainingContent(
+                selectedExercise = selectedExercise,
+                routine = routine,
+                session = session,
+                fitnessViewModel = fitnessViewModel
+            )
         }
 
         TrainingFABs(
             onBack = onBack,
             onEdit = { showDialog = true },
-            modifier = Modifier.align(Alignment.BottomEnd)
+            modifier = Modifier.align(Alignment.BottomEnd),
+            fitnessViewModel = fitnessViewModel
         )
     }
     if (showDialog) {
         TrainingEditDialog(
-            onDismiss = { showDialog = false }
+            routine = routine,
+            fitnessViewModel = fitnessViewModel,
+            onCancel = { showDialog = false },
+            onSave = { showDialog = false }
         )
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TrainingContent() {
+fun TrainingContent(
+    selectedExercise: ExerciseInfo?,
+    routine: ExerciseRoutine?,
+    session: TrainingSessionState,
+    fitnessViewModel: FitnessViewModel
+) {
     val colors = LocalZenithColors.current
     val textColor = colors.autoText(MaterialTheme.colorScheme.background)
 
@@ -99,29 +146,51 @@ fun TrainingContent() {
             color = textColor
         )
 
-        TrainingStatsRow()
+        TrainingStatsRow(routine)
 
         TrainingTimerSection(
-            exerciseImage = R.drawable.fit_correr
+            exerciseImage = selectedExercise?.let { exerciseDrawableFor(it.id) } ?: R.drawable.fit_correr,
+            session = session,
+            fitnessViewModel = fitnessViewModel
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        TrainingProgressSection()
+        TrainingProgressSection(
+            routine = routine,
+            session = session
+        )
     }
 
 }
 @Composable
-fun TrainingStatsRow() {
+fun TrainingStatsRow(
+    routine: ExerciseRoutine?
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        TrainingStatItem("03", stringResource(R.string.series))
-        TrainingStatItem("12", stringResource(R.string.reps))
-        TrainingStatItem("60s", stringResource(R.string.workout))
-        TrainingStatItem("120s", stringResource(R.string.rest))
+        TrainingStatItem(
+            routine?.series?.toString()?.padStart(2, '0') ?: "--",
+            stringResource(R.string.series)
+        )
+
+        TrainingStatItem(
+            routine?.repetitions?.toString()?.padStart(2, '0') ?: "--",
+            stringResource(R.string.reps)
+        )
+
+        TrainingStatItem(
+            routine?.workoutSeconds?.let { "${it}s" } ?: "--",
+            stringResource(R.string.workout)
+        )
+
+        TrainingStatItem(
+            routine?.restSeconds?.let { "${it}s" } ?: "--",
+            stringResource(R.string.rest)
+        )
     }
 }
 @Composable
@@ -165,10 +234,13 @@ fun TrainingStatItem(
         }
     }
 }
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TrainingTimerSection(
-    exerciseImage: Int
-) {
+    exerciseImage: Int,
+    session: TrainingSessionState,
+    fitnessViewModel: FitnessViewModel
+){
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -176,20 +248,30 @@ fun TrainingTimerSection(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        TimerTopRow(exerciseImage)
+        TimerTopRow(
+            exerciseImage = exerciseImage,
+            session = session,
+            fitnessViewModel = fitnessViewModel
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        TimerDisplay()
+        TimerDisplay(
+            session = session,
+            fitnessViewModel = fitnessViewModel
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
 
     }
 }
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TimerTopRow(
-    exerciseImage: Int
+    exerciseImage: Int,
+    session: TrainingSessionState,
+    fitnessViewModel: FitnessViewModel
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -203,17 +285,23 @@ fun TimerTopRow(
             modifier = Modifier.size(150.dp)
         )
 
-        CircularTimer()
+        CircularTimer(
+            session = session,
+            fitnessViewModel = fitnessViewModel
+        )
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun CircularTimer() {
+fun CircularTimer(
+    session: TrainingSessionState,
+    fitnessViewModel: FitnessViewModel
+) {
 
     val colors = LocalZenithColors.current
 
-    var isRunning by remember { mutableStateOf(false) }
-    var progress by remember { mutableStateOf(0.3f) }
+    val progress = session.totalWorkoutProgress
 
     Box(
         contentAlignment = Alignment.Center,
@@ -237,13 +325,10 @@ fun CircularTimer() {
         }
 
         IconButton(
-            onClick = {
-                isRunning = !isRunning
-                progress = if (isRunning) 0.7f else 0.3f
-            }
+            onClick = { fitnessViewModel.toggleTimer() }
         ) {
             Icon(
-                imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                imageVector = if (session.isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
                 contentDescription = "Play/Pause",
                 tint = colors.highlight
             )
@@ -251,10 +336,14 @@ fun CircularTimer() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TimerDisplay() {
+fun TimerDisplay(
+    session: TrainingSessionState,
+    fitnessViewModel: FitnessViewModel
+) {
 
-    val time = "00:01:20"
+    val time = formatElapsedTime(session.elapsedSeconds)
 
     val colors = LocalZenithColors.current
     val textColor = colors.autoText(MaterialTheme.colorScheme.background)
@@ -279,13 +368,16 @@ fun TimerDisplay() {
                 color = textColor
             )
 
-            TimerControls()
+            TimerControls(fitnessViewModel)
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TimerControls() {
+fun TimerControls(
+    fitnessViewModel: FitnessViewModel
+) {
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -295,22 +387,34 @@ fun TimerControls() {
         SizeButton(
             text = stringResource(R.string.button_stop),
             isSelected = true,
-            onClick = {},
+            onClick = { fitnessViewModel.resetTimer() },
             modifier = Modifier.width(90.dp)
         )
 
         SizeButton(
             text = stringResource(R.string.button_restart),
             isSelected = true,
-            onClick = {},
+            onClick = { fitnessViewModel.restartTimer() },
             modifier = Modifier.width(90.dp)
         )
     }
 }
 @Composable
-fun TrainingProgressSection() {
+fun TrainingProgressSection(
+    routine: ExerciseRoutine?,
+    session: TrainingSessionState
+){
     val colors = LocalZenithColors.current
     val textColor = colors.autoText(MaterialTheme.colorScheme.background)
+
+    val totalSeries = routine?.series ?: 1
+    val totalReps = routine?.repetitions ?: 1
+
+    val currentSeries = session.currentSeries
+    val currentRep = session.currentRepetition
+
+    val seriesProgress = session.seriesProgress
+    val repsProgress = session.repetitionProgress
 
     Column(
         modifier = Modifier
@@ -325,16 +429,25 @@ fun TrainingProgressSection() {
             color = textColor
         )
 
+        if (session.isResting) {
+            Text(
+                text = "Tiempo de descanso",
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier.padding(start = 12.dp, bottom = 12.dp),
+                color = colors.highlight
+            )
+        }
+
         ProgressItem(
-            title = "Serie 01 de 12",
-            progress = 0.1f
+            title = "Serie ${currentSeries.toString().padStart(2, '0')} de ${totalSeries.toString().padStart(2, '0')}",
+            progress = seriesProgress
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
         ProgressItem(
-            title = "Repeticiones 01 de 12",
-            progress = 0.1f
+            title = "Repeticiones ${currentRep.toString().padStart(2, '0')} de ${totalReps.toString().padStart(2, '0')}",
+            progress = repsProgress
         )
     }
 }
@@ -368,18 +481,21 @@ fun ProgressItem(
 
 @Composable
 fun TrainingEditDialog(
-    onDismiss: () -> Unit
+    routine: ExerciseRoutine?,
+    fitnessViewModel: FitnessViewModel,
+    onCancel: () -> Unit,
+    onSave: () -> Unit
 ) {
     val colors = LocalZenithColors.current
     val textColor = colors.autoText(MaterialTheme.colorScheme.background)
 
-    var series by remember { mutableStateOf(3f) }
-    var reps by remember { mutableStateOf(12f) }
-    var workoutTime by remember { mutableStateOf(60f) }
-    var restTime by remember { mutableStateOf(120f) }
+    var series by remember(routine) { mutableStateOf((routine?.series ?: 3).toFloat()) }
+    var reps by remember(routine) { mutableStateOf((routine?.repetitions ?: 12).toFloat()) }
+    var workoutTime by remember(routine) { mutableStateOf((routine?.workoutSeconds ?: 60).toFloat()) }
+    var restTime by remember(routine) { mutableStateOf((routine?.restSeconds ?: 120).toFloat()) }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = onCancel,
         confirmButton = {},
         dismissButton = {},
         containerColor = MaterialTheme.colorScheme.background,
@@ -430,7 +546,7 @@ fun TrainingEditDialog(
                     SizeButton(
                         text = stringResource(R.string.button_cancel),
                         isSelected = false,
-                        onClick = onDismiss
+                        onClick = onCancel
                     )
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -439,7 +555,13 @@ fun TrainingEditDialog(
                         text = stringResource(R.string.button_save),
                         isSelected = true,
                         onClick = {
-                            onDismiss()
+                            fitnessViewModel.updateRoutine(
+                                series = series.toInt(),
+                                repetitions = reps.toInt(),
+                                workoutSeconds = workoutTime.toInt(),
+                                restSeconds = restTime.toInt()
+                            )
+                            onSave()
                         }
                     )
                 }
@@ -482,11 +604,20 @@ fun SliderItem(
     }
 }
 
+fun formatElapsedTime(totalSeconds: Int): String {
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+
+    return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+}
+
 @Composable
 fun TrainingFABs(
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fitnessViewModel: FitnessViewModel
 ) {
     val colors = LocalZenithColors.current
     val textColor = colors.autoText(colors.accent2)
@@ -510,7 +641,10 @@ fun TrainingFABs(
 
         AppFab(
             icon = Icons.Default.ArrowBack,
-            onClick = onBack
+            onClick = {
+                fitnessViewModel.stopTrainingSession()
+                onBack()
+            }
         )
     }
 }

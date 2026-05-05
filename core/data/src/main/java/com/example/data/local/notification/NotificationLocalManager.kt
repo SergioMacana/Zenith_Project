@@ -1,7 +1,10 @@
 package com.example.data.local.notification
 
+import android.Manifest
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.example.domain.model.NotificationItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -9,10 +12,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class NotificationLocalManager(context: Context) {
+class NotificationLocalManager(
+    private val appContext: Context
+) {
 
     private val prefs: SharedPreferences =
-        context.getSharedPreferences("zenith_notifications", Context.MODE_PRIVATE)
+        appContext.getSharedPreferences("zenith_notifications", Context.MODE_PRIVATE)
 
     private val gson = Gson()
 
@@ -22,11 +27,19 @@ class NotificationLocalManager(context: Context) {
     val notifications: StateFlow<List<NotificationItem>> =
         _notifications.asStateFlow()
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun saveNotification(notification: NotificationItem) {
         val updated = _notifications.value.toMutableList().apply {
             add(0, notification)
         }
         persist(updated)
+
+        ZenithNotifier.pushSystemNotification(
+            context = appContext,
+            notificationId = notification.id.hashCode(),
+            title = notification.title,
+            message = notification.message
+        )
     }
 
     fun markAsRead(notificationId: String) {

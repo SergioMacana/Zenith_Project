@@ -1,8 +1,8 @@
 package com.example.ui.screens
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,12 +19,13 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.CheckboxDefaults.colors
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,14 +38,28 @@ import com.example.ui.components.AppFab
 import com.example.ui.components.AppHeader
 import com.example.ui.theme.LocalZenithColors
 import com.example.ui.theme.autoText
+import com.example.ui.viewmodel.FitnessViewModel
 
 @Composable
 fun FitnessScreen(
-    onGoToTraining: (exerciseName: String) -> Unit,
+    fitnessViewModel: FitnessViewModel,
+    onGoToTraining: (String) -> Unit,
     onBack: () -> Unit
 ) {
     val colors = LocalZenithColors.current
     val textColor = colors.autoText(MaterialTheme.colorScheme.background)
+
+    val exerciseDomainList by fitnessViewModel.exercises.collectAsState()
+
+    val exercises = remember(exerciseDomainList) {
+        exerciseDomainList.map { domainExercise ->
+            ExerciseUi(
+                name = domainExercise.title,
+                iconRes = exerciseDrawableFor(domainExercise.id),
+                id = domainExercise.id
+            )
+        }
+    }
     Scaffold(
         floatingActionButton = {
             AppFab(
@@ -88,7 +103,7 @@ fun FitnessScreen(
                         ExerciseItem(
                             exercise = exercise,
                             onClick = {
-                                onGoToTraining(exercise.name)
+                                onGoToTraining(exercise.id)
                             }
                         )
                     }
@@ -114,7 +129,10 @@ fun ExerciseItem(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.clickable { onClick() }
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable { onClick() }
         ) {
             Image(
                 painter = painterResource(id = exercise.iconRes),
@@ -135,17 +153,21 @@ fun ExerciseItem(
 }
 
 data class ExerciseUi(
+    val id: String,
     val name: String,
-    val iconRes: Int
+    @DrawableRes val iconRes: Int
 )
 
-val exercises = listOf(
-    ExerciseUi("Correr", R.drawable.fit_correr),
-    ExerciseUi("Meditar", R.drawable.fit_meditation),
-    ExerciseUi("Saltar", R.drawable.fit_saltar),
-    ExerciseUi("Sentadillas", R.drawable.fit_sentadillas),
-    ExerciseUi("Pesas", R.drawable.fit_pesas),
-    ExerciseUi("Abdominales", R.drawable.fit_abs),
-    ExerciseUi("Flexiones", R.drawable.fit_flexing),
-    ExerciseUi("Estiramiento", R.drawable.fit_estiramiento)
-)
+fun exerciseDrawableFor(id: String): Int {
+    return when (id) {
+        "run" -> R.drawable.fit_correr
+        "meditation" -> R.drawable.fit_meditation
+        "jump" -> R.drawable.fit_saltar
+        "squats" -> R.drawable.fit_sentadillas
+        "weights" -> R.drawable.fit_pesas
+        "abs" -> R.drawable.fit_abs
+        "pushups" -> R.drawable.fit_flexing
+        "stretch" -> R.drawable.fit_estiramiento
+        else -> R.drawable.fit_correr
+    }
+}

@@ -28,6 +28,14 @@
             android:exported="false" />
 
         <receiver
+            android:name=".receivers.FitnessMorningReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receivers.FitnessHabitReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".NotificationCleanupReceiver"
             android:exported="false" />
 

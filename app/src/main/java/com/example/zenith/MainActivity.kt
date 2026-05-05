@@ -13,12 +13,15 @@ import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import com.example.ui.di.FitnessViewModelFactory
 import com.example.ui.di.MoodViewModelFactory
 import com.example.ui.di.NotificationViewModelFactory
 import com.example.ui.di.SettingsViewModelFactory
+import com.example.ui.viewmodel.FitnessViewModel
 import com.example.ui.viewmodel.MoodViewModel
 import com.example.ui.viewmodel.NotificationViewModel
 import com.example.ui.viewmodel.SettingsViewModel
+import com.example.zenith.receivers.FitnessReminderScheduler
 import com.example.zenith.ui.navigation.AppNavHost
 import com.example.zenith.ui.theme.ZenithTheme
 
@@ -27,7 +30,7 @@ class MainActivity : ComponentActivity() {
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {
-                ReminderScheduler.scheduleDailyMoodReminder(this)
+                scheduleAllReminderSystems()
             }
         }
 
@@ -51,6 +54,10 @@ class MainActivity : ComponentActivity() {
                 factory = NotificationViewModelFactory(applicationContext)
             )
 
+            val fitnessViewModel: FitnessViewModel = viewModel(
+                factory = FitnessViewModelFactory(applicationContext)
+            )
+
             val settingsState by settingsViewModel.settingsState.collectAsState()
 
             val navController = rememberNavController()
@@ -63,11 +70,19 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     settingsViewModel = settingsViewModel,
                     moodViewModel = moodViewModel,
-                    notificationViewModel = notificationViewModel
+                    notificationViewModel = notificationViewModel,
+                    fitnessViewModel = fitnessViewModel
                 )
             }
         }
     }
+
+    private fun scheduleAllReminderSystems() {
+        ReminderScheduler.scheduleDailyMoodReminder(this)
+        FitnessReminderScheduler.scheduleMorningReminder(this)
+        FitnessReminderScheduler.scheduleHabitReminder(this)
+    }
+
     private fun requestNotificationPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 
@@ -76,13 +91,13 @@ class MainActivity : ComponentActivity() {
                     Manifest.permission.POST_NOTIFICATIONS
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                ReminderScheduler.scheduleDailyMoodReminder(this)
+                scheduleAllReminderSystems()
             } else {
                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
 
         } else {
-            ReminderScheduler.scheduleDailyMoodReminder(this)
+            scheduleAllReminderSystems()
         }
     }
 }

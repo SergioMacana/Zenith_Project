@@ -7,14 +7,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import com.example.ui.screens.SplashScreen
 import androidx.navigation.compose.*
+import androidx.navigation.navArgument
 import com.example.ui.screens.ConfigScreen
 import com.example.ui.screens.FitnessScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.MoodScreen
 import com.example.ui.screens.TasksScreen
 import com.example.ui.screens.TrainingScreen
+import com.example.ui.viewmodel.FitnessViewModel
 import com.example.ui.viewmodel.SettingsViewModel
 import com.example.ui.viewmodel.MoodViewModel
 import com.example.ui.viewmodel.NotificationViewModel
@@ -24,12 +27,11 @@ fun AppNavHost(
     navController: NavHostController,
     settingsViewModel: SettingsViewModel,
     moodViewModel : MoodViewModel,
-    notificationViewModel: NotificationViewModel
+    notificationViewModel: NotificationViewModel,
+    fitnessViewModel: FitnessViewModel
 ){
 
     val settingsState by settingsViewModel.settingsState.collectAsState()
-
-    var selectedExercise by remember { mutableStateOf("") }
 
     NavHost(
         navController = navController,
@@ -99,17 +101,27 @@ fun AppNavHost(
 
         composable(NavRoutes.Fitness.route) {
             FitnessScreen(
-                onGoToTraining = { exercise ->
-                    selectedExercise = exercise
-                    navController.navigate(NavRoutes.Training.route)
+                onGoToTraining = { exerciseId ->
+                    navController.navigate(NavRoutes.Training.createRoute(exerciseId))
                 },
+                fitnessViewModel = fitnessViewModel,
                 onBack = { navController.popBackStack() }
             )
         }
 
-        composable(NavRoutes.Training.route) {
+        composable(
+            route = NavRoutes.Training.route,
+            arguments = listOf(
+                navArgument("exerciseId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+
+            val exerciseId =
+                backStackEntry.arguments?.getString("exerciseId") ?: return@composable
+
             TrainingScreen(
-                exerciseName = selectedExercise,
+                exerciseId = exerciseId,
+                fitnessViewModel = fitnessViewModel,
                 onBack = { navController.popBackStack() }
             )
         }
