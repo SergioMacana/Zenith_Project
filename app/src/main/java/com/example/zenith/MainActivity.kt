@@ -10,6 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
@@ -17,10 +18,12 @@ import com.example.ui.di.FitnessViewModelFactory
 import com.example.ui.di.MoodViewModelFactory
 import com.example.ui.di.NotificationViewModelFactory
 import com.example.ui.di.SettingsViewModelFactory
+import com.example.ui.di.ZenithContainer
 import com.example.ui.viewmodel.FitnessViewModel
 import com.example.ui.viewmodel.MoodViewModel
 import com.example.ui.viewmodel.NotificationViewModel
 import com.example.ui.viewmodel.SettingsViewModel
+import com.example.ui.viewmodel.TaskViewModel
 import com.example.zenith.receivers.FitnessReminderScheduler
 import com.example.zenith.ui.navigation.AppNavHost
 import com.example.zenith.ui.theme.ZenithTheme
@@ -41,6 +44,12 @@ class MainActivity : ComponentActivity() {
         CleanupScheduler.scheduleDailyCleanup(this)
 
         setContent {
+
+            val zenithContainer = remember { ZenithContainer(this) }
+
+            val taskViewModel: TaskViewModel = viewModel(
+                factory = zenithContainer.taskViewModelFactory
+            )
 
             val settingsViewModel: SettingsViewModel = viewModel(
                 factory = SettingsViewModelFactory(applicationContext)
@@ -71,6 +80,7 @@ class MainActivity : ComponentActivity() {
                     settingsViewModel = settingsViewModel,
                     moodViewModel = moodViewModel,
                     notificationViewModel = notificationViewModel,
+                    taskViewModel = taskViewModel,
                     fitnessViewModel = fitnessViewModel
                 )
             }

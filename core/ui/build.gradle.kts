@@ -19,6 +19,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
 }
@@ -43,4 +44,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.2")
     implementation("androidx.activity:activity-compose:1.9.0")
+
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }

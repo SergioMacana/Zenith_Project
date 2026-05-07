@@ -83,6 +83,7 @@ fun HomeScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             HomeHeader(
+                settingsViewModel = settingsViewModel,
                 onOpenLeft = {
                     isLeftPanelOpen = true
                     isRightPanelOpen = false

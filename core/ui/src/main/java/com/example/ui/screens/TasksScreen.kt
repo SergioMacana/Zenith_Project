@@ -53,6 +53,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,9 +64,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.domain.model.TaskItem
+import com.example.domain.model.TaskPresentation
 import com.example.ui.R
 import com.example.ui.components.AppFab
 import com.example.ui.components.AppTextField
@@ -73,20 +77,33 @@ import com.example.ui.components.BaseSwitchScreen
 import com.example.ui.components.SizeButton
 import com.example.ui.theme.LocalZenithColors
 import com.example.ui.theme.autoText
+import com.example.ui.utils.DateUtils
+import com.example.ui.viewmodel.TaskViewModel
+import java.text.SimpleDateFormat
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Month
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import java.util.UUID
 import kotlin.math.roundToInt
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TasksScreen(
+    taskViewModel: TaskViewModel,
     onBack: () -> Unit
 ){
+    val pendingTasks by taskViewModel.pendingTasks.collectAsState()
+    val tasksForSelectedDay by taskViewModel.tasksForSelectedDay.collectAsState()
+    val tasksForSelectedMonth by taskViewModel.tasksForSelectedMonth.collectAsState()
+    val selectedDate by taskViewModel.selectedDate.collectAsState()
+
     var selectedIndex by remember { mutableStateOf(0) }
     var showDialog by remember { mutableStateOf(false) }
     var dialogMode by remember { mutableStateOf<TaskDialogMode>(TaskDialogMode.CREATE) }
-    var currentTask by remember { mutableStateOf<TaskUi?>(null) }
+    var currentTask by remember { mutableStateOf<TaskPresentation?>(null) }
 
     val titles = listOf(
         stringResource(R.string.title_tasks_1),
@@ -119,13 +136,16 @@ fun TasksScreen(
         TaskContentPager(
             selectedIndex = selectedIndex,
             onPageChanged = { selectedIndex = it },
-
+            selectedDate = selectedDate,
+            pendingTasks = pendingTasks,
+            weeklyTasks = tasksForSelectedDay,
+            monthlyTasks = tasksForSelectedMonth,
+            onDateSelected = { taskViewModel.selectDate(it) },
             onEdit = { task ->
                 dialogMode = TaskDialogMode.EDIT
                 currentTask = task
                 showDialog = true
             },
-
             onComplete = { task ->
                 dialogMode = TaskDialogMode.COMPLETE
                 currentTask = task
@@ -137,20 +157,67 @@ fun TasksScreen(
         TaskDialog(
             mode = dialogMode,
             task = currentTask,
-            onDismiss = { showDialog = false }
+            onDismiss = { showDialog = false },
+
+            onSave = { title, description, date, time ->
+
+                if (dialogMode == TaskDialogMode.CREATE) {
+                    taskViewModel.createTask(
+                        TaskItem(
+                            id = UUID.randomUUID().toString(),
+                            title = title,
+                            description = description,
+                            dueDate = date,
+                            dueTimeLabel = time,
+                            isCompleted = false,
+                            reminderEnabled = true,
+                            createdAt = System.currentTimeMillis()
+                        )
+                    )
+                } else {
+                    taskViewModel.updateTask(
+                        currentTask!!.toDomain().copy(
+                            title = title,
+                            description = description,
+                            dueDate = date,
+                            dueTimeLabel = time
+                        )
+                    )
+                }
+
+                showDialog = false
+            },
+
+            onDelete = {
+                currentTask?.let {
+                    taskViewModel.deleteTask(it.id)
+                }
+                showDialog = false
+            },
+
+            onConfirmComplete = {
+                currentTask?.let {
+                    taskViewModel.completeTask(it.id)
+                }
+                showDialog = false
+            }
         )
     }
 }
-@RequiresApi(Build.VERSION_CODES.O)
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TaskContentPager(
     selectedIndex: Int,
     onPageChanged: (Int) -> Unit,
-    onEdit: (TaskUi) -> Unit,
-    onComplete: (TaskUi) -> Unit
-
-) {
+    selectedDate: Long,
+    pendingTasks: List<TaskPresentation>,
+    weeklyTasks: List<TaskPresentation>,
+    monthlyTasks: List<TaskPresentation>,
+    onDateSelected: (Long) -> Unit,
+    onEdit: (TaskPresentation) -> Unit,
+    onComplete: (TaskPresentation) -> Unit
+){
     val pagerState = rememberPagerState(
         initialPage = selectedIndex,
         pageCount = { 2 }
@@ -168,115 +235,98 @@ fun TaskContentPager(
         }
     }
 
-    HorizontalPager(
-        state = pagerState
-    ) { page ->
+    HorizontalPager(state = pagerState) { page ->
 
         when (page) {
-            0 -> WeeklyTasksScreen()
-            1 -> MonthlyTasksScreen()
+            0 -> WeeklyTasksScreen(
+                selectedDate = selectedDate,
+                pendingTasks = pendingTasks,
+                tasks = weeklyTasks,
+                onDateSelected = onDateSelected,
+                onEdit = onEdit,
+                onComplete = onComplete
+            )
+
+            1 -> MonthlyTasksScreen(
+                selectedDate = selectedDate,
+                pendingTasks = pendingTasks,
+                tasks = monthlyTasks,
+                onDateSelected = onDateSelected,
+                onEdit = onEdit,
+                onComplete = onComplete
+            )
         }
     }
 }
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Composable
-fun WeeklyTasksScreen() {
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-
-    var showDialog by remember { mutableStateOf(false) }
-    var dialogMode by remember { mutableStateOf<TaskDialogMode>(TaskDialogMode.CREATE) }
-
-    var currentTask by remember { mutableStateOf<TaskUi?>(null) }
-
+fun WeeklyTasksScreen(
+    selectedDate: Long,
+    pendingTasks: List<TaskPresentation>,
+    tasks: List<TaskPresentation>,
+    onDateSelected: (Long) -> Unit,
+    onEdit: (TaskPresentation) -> Unit,
+    onComplete: (TaskPresentation) -> Unit
+) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
         WeeklyCalendar(
             selectedDate = selectedDate,
-            onDateSelected = { selectedDate = it }
+            pendingTasks = pendingTasks,
+            onDateSelected = onDateSelected
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         TaskListSection(
-            tasks = fakeTasks,
+            tasks = tasks,
             isMonthly = false,
-
-            onEdit = { task ->
-                dialogMode = TaskDialogMode.EDIT
-                currentTask = task
-                showDialog = true
-            },
-
-            onComplete = { task ->
-                dialogMode = TaskDialogMode.COMPLETE
-                currentTask = task
-                showDialog = true
-            }
+            onEdit = onEdit,
+            onComplete = onComplete
         )
     }
-
-    if (showDialog) {
-        TaskDialog(
-            mode = dialogMode,
-            task = currentTask,
-            onDismiss = { showDialog = false }
-        )
-    }
-
 }
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Composable
-fun MonthlyTasksScreen() {
-
-    var showDialog by remember { mutableStateOf(false) }
-    var dialogMode by remember { mutableStateOf(TaskDialogMode.CREATE) }
-
-    var currentTask by remember { mutableStateOf<TaskUi?>(null) }
-
+fun MonthlyTasksScreen(
+    selectedDate: Long,
+    pendingTasks: List<TaskPresentation>,
+    tasks: List<TaskPresentation>,
+    onDateSelected: (Long) -> Unit,
+    onEdit: (TaskPresentation) -> Unit,
+    onComplete: (TaskPresentation) -> Unit
+) {
     Column {
-        MonthlyCalendar()
+        MonthlyCalendar(
+            selectedDate = selectedDate,
+            pendingTasks = pendingTasks,
+            onDateSelected = onDateSelected
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         TaskListSection(
-            tasks = fakeTasks,
-            isMonthly = false,
-
-            onEdit = { task ->
-                dialogMode = TaskDialogMode.EDIT
-                currentTask = task
-                showDialog = true
-            },
-
-            onComplete = { task ->
-                dialogMode = TaskDialogMode.COMPLETE
-                currentTask = task
-                showDialog = true
-            }
-        )
-    }
-
-    if (showDialog) {
-        TaskDialog(
-            mode = dialogMode,
-            task = currentTask,
-            onDismiss = { showDialog = false }
+            tasks = tasks,
+            isMonthly = true,
+            onEdit = onEdit,
+            onComplete = onComplete
         )
     }
 }
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Composable
 fun WeeklyCalendar(
-    selectedDate: LocalDate,
-    onDateSelected: (LocalDate) -> Unit
+    selectedDate: Long,
+    pendingTasks: List<TaskPresentation>,
+    onDateSelected: (Long) -> Unit
 ) {
     val colors = LocalZenithColors.current
     val textColor = colors.autoText(MaterialTheme.colorScheme.background)
 
-    val today = LocalDate.now()
-    val startOfWeek = today.with(DayOfWeek.MONDAY)
-    val daysOfWeek = (0..6).map { startOfWeek.plusDays(it.toLong()) }
+    val today = DateUtils.todayStart()
+    val startOfWeek = DateUtils.startOfWeek()
+    val daysOfWeek = DateUtils.weekDays()
 
     LazyRow(
         modifier = Modifier
@@ -284,11 +334,19 @@ fun WeeklyCalendar(
             .padding(horizontal = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-
         items(daysOfWeek) { date ->
 
             val isToday = date == today
             val isSelected = date == selectedDate
+
+            val hasTasks = pendingTasks.any { task ->
+                val taskDay = DateUtils.todayStart() + (
+                        (task.dueDate - DateUtils.todayStart()) /
+                                (24 * 60 * 60 * 1000)
+                        ) * (24 * 60 * 60 * 1000)
+
+                taskDay == date
+            }
 
             val backgroundColor = if (isSelected) {
                 colors.highlight
@@ -301,34 +359,45 @@ fun WeeklyCalendar(
                     .size(70.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(backgroundColor)
-                    .clickable { onDateSelected (date) },
+                    .clickable { onDateSelected(date) },
                 contentAlignment = Alignment.Center
             ) {
 
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
 
                     Text(
-                        text = date.dayOfMonth.toString(),
+                        text = DateUtils.formatDayNumber(date),
                         style = MaterialTheme.typography.bodyMedium,
                         color = textColor
                     )
 
                     Text(
-                        text = date.dayOfWeek.name.lowercase()
-                            .replaceFirstChar { it.uppercase() },
+                        text = DateUtils.formatWeekName(date),
                         style = MaterialTheme.typography.labelMedium,
                         color = textColor
                     )
                 }
 
+                // Hoy
                 if (isToday) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(bottom = 6.dp)
+                            .padding(4.dp)
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(Color.Green)
+                    )
+                }
+
+                // Tiene tareas
+                if (hasTasks) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(4.dp)
                             .size(6.dp)
                             .clip(CircleShape)
                             .background(Color.Red)
@@ -339,22 +408,18 @@ fun WeeklyCalendar(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MonthlyCalendar() {
-    val today = LocalDate.now()
-
-    val month = Month.DECEMBER
-    val year = today.year
-
-    val firstDayOfMonth = LocalDate.of(year, month, 1)
-    val daysInMonth = month.length(firstDayOfMonth.isLeapYear)
-
-    val days = (1..daysInMonth).map { day ->
-        LocalDate.of(year, month, day)
-    }
+fun MonthlyCalendar(
+    selectedDate: Long,
+    pendingTasks: List<TaskPresentation>,
+    onDateSelected: (Long) -> Unit
+) {
     val colors = LocalZenithColors.current
     val textColor = colors.autoText(MaterialTheme.colorScheme.background)
+
+    val days = DateUtils.monthDays()
+
+    val monthName = DateUtils.formatMonthName(selectedDate)
 
     Column(
         modifier = Modifier
@@ -363,7 +428,7 @@ fun MonthlyCalendar() {
     ) {
 
         Text(
-            text = "Diciembre",
+            text = monthName.replaceFirstChar { it.uppercase() },
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(bottom = 16.dp),
             color = textColor
@@ -377,24 +442,50 @@ fun MonthlyCalendar() {
 
             items(days) { date ->
 
-                val isToday = date == today
+                val isToday = date == DateUtils.todayStart()
+                val isSelected = date == selectedDate
+
+                val hasTasks = pendingTasks.any { task ->
+                    val taskDay = DateUtils.todayStart() + (
+                            (task.dueDate - DateUtils.todayStart()) /
+                                    (24 * 60 * 60 * 1000)
+                            ) * (24 * 60 * 60 * 1000)
+
+                    taskDay == date
+                }
 
                 Box(
                     modifier = Modifier
                         .aspectRatio(1f)
                         .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (isSelected) colors.highlight else Color.Transparent
+                        )
                         .border(
                             width = if (isToday) 2.dp else 0.dp,
                             color = if (isToday) colors.highlight else Color.Transparent,
                             shape = RoundedCornerShape(12.dp)
-                        ),
+                        )
+                        .clickable { onDateSelected(date) },
                     contentAlignment = Alignment.Center
                 ) {
+
                     Text(
-                        text = date.dayOfMonth.toString(),
+                        text = DateUtils.formatDayNumber(date),
                         style = MaterialTheme.typography.labelMedium,
                         color = textColor
                     )
+
+                    if (hasTasks) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 4.dp)
+                                .size(5.dp)
+                                .clip(CircleShape)
+                                .background(colors.highlight)
+                        )
+                    }
                 }
             }
         }
@@ -403,11 +494,17 @@ fun MonthlyCalendar() {
 
 @Composable
 fun TaskListSection(
-    tasks: List<TaskUi>,
+    tasks: List<TaskPresentation>,
     isMonthly: Boolean,
-    onEdit: (TaskUi) -> Unit,
-    onComplete: (TaskUi) -> Unit
+    onEdit: (TaskPresentation) -> Unit,
+    onComplete: (TaskPresentation) -> Unit
 ) {
+    if (tasks.isEmpty()) {
+
+        EmptyTasksState(isMonthly)
+
+        return
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -415,8 +512,10 @@ fun TaskListSection(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-
-        items(tasks) { task ->
+        items(
+            items = tasks,
+            key = { it.id }
+        ) { task ->
             TaskRow(
                 task = task,
                 isMonthly = isMonthly,
@@ -428,37 +527,75 @@ fun TaskListSection(
 }
 
 @Composable
+fun EmptyTasksState(isMonthly: Boolean) {
+
+    val text = if (isMonthly) {
+        "No hay tareas en este mes"
+    } else {
+        "No hay tareas para este día"
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
 fun TaskRow(
-    task: TaskUi,
+    task: TaskPresentation,
     isMonthly: Boolean,
-    onEdit: (TaskUi) -> Unit,
-    onComplete: (TaskUi) -> Unit
+    onEdit: (TaskPresentation) -> Unit,
+    onComplete: (TaskPresentation) -> Unit
 ) {
     val colors = LocalZenithColors.current
     val textColor = colors.autoText(MaterialTheme.colorScheme.background)
 
+    val time = formatTime(task.dueDate)
+    val day = DateUtils.formatDayNumber(task.dueDate)
+    val month = DateUtils.formatMonthName(task.dueDate)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
 
         Column(
-            modifier = Modifier
-                .width(80.dp),
+            modifier = Modifier.width(80.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
 
+            // Hora
             Text(
-                text= task.time,
+                text = time,
                 style = MaterialTheme.typography.labelMedium,
                 color = textColor
             )
 
+            //Solo en vista mensual
             if (isMonthly) {
-                Text(task.day ?: "", style = MaterialTheme.typography.bodyMedium, color = textColor)
-                Text(task.month ?: "", style = MaterialTheme.typography.bodyMedium, color = textColor)
+                Text(
+                    text = day,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = textColor
+                )
+
+                Text(
+                    text = month.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = textColor
+                )
             }
         }
 
@@ -472,16 +609,21 @@ fun TaskRow(
     }
 }
 
+fun formatTime(time: Long): String {
+    return SimpleDateFormat("hh:mm a", Locale.getDefault())
+        .format(Date(time))
+}
+
 @Composable
 fun TaskItemCard(
-    task: TaskUi,
+    task: TaskPresentation,
     onEditClick: () -> Unit,
-    onComplete: (TaskUi) -> Unit
+    onComplete: (TaskPresentation) -> Unit
 ) {
     val colors = LocalZenithColors.current
     val textColor = colors.autoText(MaterialTheme.colorScheme.background)
 
-    var offsetX by remember { mutableStateOf(0f) }
+    var offsetX by remember(task.id) { mutableStateOf(0f) }
     val maxSwipe = -150f
 
     Box(
@@ -490,9 +632,9 @@ fun TaskItemCard(
             .height(80.dp)
     ) {
 
+        // Fondo (check)
         Box(
-            modifier = Modifier
-                .matchParentSize(),
+            modifier = Modifier.matchParentSize(),
             contentAlignment = Alignment.CenterEnd
         ) {
             Box(
@@ -501,8 +643,6 @@ fun TaskItemCard(
                     .fillMaxHeight()
                     .clip(
                         RoundedCornerShape(
-                            topStart = 0.dp,
-                            bottomStart = 0.dp,
                             topEnd = 16.dp,
                             bottomEnd = 16.dp
                         )
@@ -517,23 +657,31 @@ fun TaskItemCard(
             }
         }
 
+        // Card
         Box(
             modifier = Modifier
                 .offset { IntOffset(offsetX.roundToInt(), 0) }
                 .fillMaxSize()
                 .clip(RoundedCornerShape(16.dp))
                 .background(colors.secondaryBg)
-                .pointerInput(Unit) {
+                .pointerInput(task.id) {
                     detectHorizontalDragGestures(
+
                         onDragEnd = {
-                            offsetX = if (offsetX < maxSwipe / 2) maxSwipe else 0f
+                            if (offsetX < maxSwipe * 0.6f) {
+                                onComplete(task)
+                            }
+
+                            // reset visual
+                            offsetX = 0f
                         },
+
                         onHorizontalDrag = { _, dragAmount ->
-                            offsetX = (offsetX + dragAmount).coerceIn(maxSwipe, 0f)
+                            offsetX = (offsetX + dragAmount)
+                                .coerceIn(maxSwipe, 0f)
                         }
                     )
                 }
-                .clickable { onComplete(task)}
                 .padding(12.dp)
         ) {
 
@@ -545,7 +693,12 @@ fun TaskItemCard(
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(task.title, style = MaterialTheme.typography.titleLarge, color = textColor)
+                    Text(
+                        task.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = textColor
+                    )
+
                     Text(
                         task.description,
                         style = MaterialTheme.typography.labelMedium,
@@ -567,7 +720,10 @@ fun TaskItemCard(
 @Composable
 fun TaskDialog(
     mode: TaskDialogMode,
-    task: TaskUi?,
+    task: TaskPresentation?,
+    onSave: (title: String, description: String, date: Long, time: String) -> Unit,
+    onDelete: () -> Unit,
+    onConfirmComplete: () -> Unit,
     onDismiss: () -> Unit
 ) {
 
@@ -579,7 +735,14 @@ fun TaskDialog(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
+    var selectedDate by remember {
+        mutableStateOf(task?.dueDate ?: DateUtils.todayStart())
+    }
+
     Dialog(onDismissRequest = onDismiss) {
+
+        var selectedDateMillis by remember { mutableStateOf(task?.dueDate ?: System.currentTimeMillis()) }
+        var selectedTimeText by remember { mutableStateOf(task?.time ?: "") }
 
         Surface(
             shape = RoundedCornerShape(20.dp),
@@ -632,13 +795,13 @@ fun TaskDialog(
                 ) {
 
                     DateButton(
-                        text = task?.day ?: "Seleccionar fecha",
+                        text = DateUtils.formatDayNumber(selectedDate),
                         enabled = isEditable,
                         onClick = { showDatePicker = true }
                     )
 
                     TimeButton(
-                        text = task?.time ?: "Seleccionar hora",
+                        text = formatTime(selectedDate),
                         enabled = isEditable,
                         onClick = { showTimePicker = true }
                     )
@@ -647,8 +810,24 @@ fun TaskDialog(
                 if (showDatePicker) {
                     AppDatePickerDialog(
                         onDismiss = { showDatePicker = false },
-                        onDateSelected = {
-                            // actualizar estado
+                        onDateSelected = { millis ->
+
+                            millis?.let { safeMillis ->
+
+                                val newDate = Calendar.getInstance().apply {
+                                    timeInMillis = safeMillis
+                                }
+
+                                val calendar = Calendar.getInstance().apply {
+                                    timeInMillis = selectedDate
+
+                                    set(Calendar.YEAR, newDate.get(Calendar.YEAR))
+                                    set(Calendar.MONTH, newDate.get(Calendar.MONTH))
+                                    set(Calendar.DAY_OF_MONTH, newDate.get(Calendar.DAY_OF_MONTH))
+                                }
+
+                                selectedDate = calendar.timeInMillis
+                            }
                         }
                     )
                 }
@@ -657,16 +836,37 @@ fun TaskDialog(
                     AppTimePickerDialog(
                         onDismiss = { showTimePicker = false },
                         onTimeSelected = { hour, minute ->
-                            // actualizar estado
+
+                            val calendar = Calendar.getInstance().apply {
+                                timeInMillis = selectedDate
+                                set(Calendar.HOUR_OF_DAY, hour)
+                                set(Calendar.MINUTE, minute)
+                            }
+
+                            selectedDate = calendar.timeInMillis
                         }
                     )
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
+                val onSaveTask = {
+                    onSave(title, description, selectedDateMillis, selectedTimeText)
+                }
+
+                val onDeleteTask = {
+                    onDelete()
+                }
+
+                val onCompleteTask = {
+                    onConfirmComplete()
+                }
 
                 DialogButtons(
                     mode = mode,
+                    onSave = { onSaveTask() },
+                    onDelete = { onDeleteTask() },
+                    onConfirmComplete = { onCompleteTask() },
                     onDismiss = onDismiss
                 )
             }
@@ -702,6 +902,9 @@ fun TimeButton(
 @Composable
 fun DialogButtons(
     mode: TaskDialogMode,
+    onSave: () -> Unit,
+    onDelete: () -> Unit,
+    onConfirmComplete: () -> Unit,
     onDismiss: () -> Unit
 ) {
 
@@ -715,18 +918,18 @@ fun DialogButtons(
             TaskDialogMode.COMPLETE -> {
                 SizeButton("Cancelar", false, onDismiss)
                 Spacer(modifier = Modifier.width(8.dp))
-                SizeButton("Confirmar", true, onDismiss)
+                SizeButton("Confirmar", true, onConfirmComplete)
             }
 
             else -> {
-                Text(
-                    text = "Eliminar",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.Red,
-                    modifier = Modifier
-                        .align(Alignment.CenterVertically)
-                        .clickable { }
-                )
+
+                if (mode == TaskDialogMode.EDIT) {
+                    Text(
+                        text = "Eliminar",
+                        color = Color.Red,
+                        modifier = Modifier.clickable { onDelete() }
+                    )
+                }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
@@ -734,7 +937,7 @@ fun DialogButtons(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                SizeButton("Guardar", true, onDismiss)
+                SizeButton("Guardar", true, onSave)
             }
         }
     }
@@ -745,37 +948,19 @@ enum class TaskDialogMode {
     COMPLETE
 }
 
-data class TaskUi(
-    val time: String,
-    val title: String,
-    val description: String,
-    val day: String? = null,
-    val month: String? = null
-)
-
-val fakeTasks = listOf(
-    TaskUi(
-        time = "07:00 am",
-        title = "Beber agua",
-        description = "Mantente hidratado durante el día",
-        day = "20",
-        month = "Diciembre"
-    ),
-    TaskUi(
-        time = "02:00 pm",
-        title = "Ir de compras",
-        description = "No olvidar la comida de Mike",
-        day = "24",
-        month = "Diciembre"
-    ),
-    TaskUi(
-        time = "04:30 pm",
-        title = "Preparar cumple de Andrés",
-        description = "Decidir si comprar o preparar la comida",
-        day = "28",
-        month = "Diciembre"
+fun TaskPresentation.toDomain(): TaskItem {
+    return TaskItem(
+        id = id,
+        title = title,
+        description = description,
+        dueDate = dueDate,
+        dueTimeLabel = time,
+        isCompleted = isCompleted,
+        reminderEnabled = reminderEnabled,
+        createdAt = createdAt
     )
-)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppDatePickerDialog(

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.ksp)
 }
 android {
     namespace = "com.example.data"
@@ -13,6 +14,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 }
 
@@ -27,4 +29,12 @@ dependencies {
     implementation(libs.coroutines.android)
     implementation("com.google.code.gson:gson:2.10.1")
     implementation(libs.androidx.core)
+
+    api(libs.room.runtime)
+    api(libs.room.ktx)
+    ksp(libs.room.compiler)
+
+    ksp(libs.room.compiler)
+
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }

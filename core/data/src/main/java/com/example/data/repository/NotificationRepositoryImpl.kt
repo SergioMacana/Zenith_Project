@@ -1,5 +1,7 @@
 package com.example.data.repository
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.example.data.local.notification.NotificationLocalManager
 import com.example.domain.model.NotificationItem
 import com.example.domain.repository.NotificationRepository
@@ -13,6 +15,7 @@ class NotificationRepositoryImpl (
         return localManager.notifications
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun saveNotification(notification: NotificationItem) {
         localManager.saveNotification(notification)
     }

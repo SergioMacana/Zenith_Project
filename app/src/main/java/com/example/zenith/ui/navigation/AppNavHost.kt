@@ -21,6 +21,7 @@ import com.example.ui.viewmodel.FitnessViewModel
 import com.example.ui.viewmodel.SettingsViewModel
 import com.example.ui.viewmodel.MoodViewModel
 import com.example.ui.viewmodel.NotificationViewModel
+import com.example.ui.viewmodel.TaskViewModel
 
 @Composable
 fun AppNavHost(
@@ -28,6 +29,7 @@ fun AppNavHost(
     settingsViewModel: SettingsViewModel,
     moodViewModel : MoodViewModel,
     notificationViewModel: NotificationViewModel,
+    taskViewModel: TaskViewModel,
     fitnessViewModel: FitnessViewModel
 ){
 
@@ -93,6 +95,7 @@ fun AppNavHost(
 
         composable(NavRoutes.Tasks.route) {
             TasksScreen(
+                taskViewModel = taskViewModel,
                 onBack = {
                     navController.popBackStack()
                 }
