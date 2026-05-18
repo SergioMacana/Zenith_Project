@@ -1,5 +1,6 @@
 package com.example.ui.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.domain.model.TaskItem
@@ -13,6 +14,7 @@ import com.example.domain.usecase.task.GetTaskByIdUseCase
 import com.example.domain.usecase.task.GetTasksForDayUseCase
 import com.example.domain.usecase.task.GetUpcomingTasksUseCase
 import com.example.domain.usecase.task.UpdateTaskUseCase
+import com.example.ui.receivers.TaskReminderScheduler
 import com.example.ui.utils.DateUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +23,7 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class TaskViewModel(
+    private val appContext: Context,
     private val createTaskUseCase: CreateTaskUseCase,
     private val updateTaskUseCase: UpdateTaskUseCase,
     private val deleteTaskUseCase: DeleteTaskUseCase,
@@ -46,6 +49,9 @@ class TaskViewModel(
     private val _selectedDate = MutableStateFlow(DateUtils.todayStart())
     val selectedDate: StateFlow<Long> = _selectedDate.asStateFlow()
 
+    private val _upcomingTasks = MutableStateFlow<List<TaskItem>>(emptyList())
+    val upcomingTasks: StateFlow<List<TaskItem>> = _upcomingTasks.asStateFlow()
+
     init {
         refreshPendingTasks()
     }
@@ -60,6 +66,7 @@ class TaskViewModel(
         refreshPendingTasks()
         refreshTasksForSelectedDate()
         refreshTasksForSelectedMonth()
+        loadUpcomingTasks()
     }
 
     private fun refreshPendingTasks() {
@@ -118,30 +125,76 @@ class TaskViewModel(
         _selectedTask.value = null
     }
 
+    private fun loadUpcomingTasks() {
+        viewModelScope.launch {
+            _upcomingTasks.value = getUpcomingTasksUseCase()
+        }
+    }
+
     fun createTask(task: TaskItem) {
         viewModelScope.launch {
             createTaskUseCase(task)
+
+            TaskReminderScheduler.scheduleTaskNotifications(
+                context = appContext,
+                task = task
+            )
+
+            // Garantiza que la notificación diaria exista
+            TaskReminderScheduler.scheduleDailySummary(appContext)
+
             refreshAll()
         }
     }
 
     fun updateTask(task: TaskItem) {
         viewModelScope.launch {
+            TaskReminderScheduler.cancelTaskNotifications(
+                context = appContext,
+                task = task
+            )
+
             updateTaskUseCase(task)
+
+            TaskReminderScheduler.scheduleTaskNotifications(
+                context = appContext,
+                task = task
+            )
+
             refreshAll()
         }
     }
 
     fun deleteTask(taskId: String) {
         viewModelScope.launch {
+            val task = getTaskByIdUseCase(taskId)
+
+            if (task != null) {
+                TaskReminderScheduler.cancelTaskNotifications(
+                    context = appContext,
+                    task = task
+                )
+            }
+
             deleteTaskUseCase(taskId)
+
             refreshAll()
         }
     }
 
     fun completeTask(taskId: String) {
         viewModelScope.launch {
+            val task = getTaskByIdUseCase(taskId)
+
+            if (task != null) {
+                TaskReminderScheduler.cancelTaskNotifications(
+                    context = appContext,
+                    task = task
+                )
+            }
+
             completeTaskUseCase(taskId)
+
             refreshAll()
         }
     }

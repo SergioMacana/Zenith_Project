@@ -43,11 +43,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
-import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
@@ -80,9 +80,6 @@ import com.example.ui.theme.autoText
 import com.example.ui.utils.DateUtils
 import com.example.ui.viewmodel.TaskViewModel
 import java.text.SimpleDateFormat
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.Month
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
@@ -417,73 +414,184 @@ fun MonthlyCalendar(
     val colors = LocalZenithColors.current
     val textColor = colors.autoText(MaterialTheme.colorScheme.background)
 
-    val days = DateUtils.monthDays()
+    // Fecha seleccionada
+    val selectedCalendar = Calendar.getInstance().apply {
+        timeInMillis = selectedDate
+    }
 
-    val monthName = DateUtils.formatMonthName(selectedDate)
+    val currentMonth = selectedCalendar.get(Calendar.MONTH)
+    val currentYear = selectedCalendar.get(Calendar.YEAR)
+
+    // Primer día del mes
+    val firstDayCalendar = Calendar.getInstance().apply {
+        clear()
+        set(Calendar.YEAR, currentYear)
+        set(Calendar.MONTH, currentMonth)
+        set(Calendar.DAY_OF_MONTH, 1)
+    }
+
+    // Día de la semana en que inicia el mes (0 = domingo)
+    val firstDayOfWeek = firstDayCalendar.get(Calendar.DAY_OF_WEEK) - 1
+
+    // Número de días del mes
+    val daysInMonth = firstDayCalendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+
+    // Lista con espacios vacíos iniciales + días del mes
+    val calendarCells: List<Int?> =
+        List(firstDayOfWeek) { null } +
+                (1..daysInMonth).map { it }
+
+    // Nombre del mes
+    val monthName = SimpleDateFormat(
+        "MMMM",
+        Locale.getDefault()
+    ).format(Date(selectedDate)).replaceFirstChar { it.uppercase() }
+
+    // Mostrar año solo si es distinto al actual
+    val currentYearNow = Calendar.getInstance().get(Calendar.YEAR)
+
+    val monthTitle =
+        if (currentYear == currentYearNow) {
+            monthName
+        } else {
+            "$monthName $currentYear"
+        }
+
+    // Días de la semana
+    val weekDays = listOf("D", "L", "M", "M", "J", "V", "S")
+
+    // Fecha actual del usuario
+    val today = Calendar.getInstance()
+
+    // Swipe horizontal para cambiar de mes
+    var offsetX by remember { mutableStateOf(0f) }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
+            .pointerInput(selectedDate) {
+                detectHorizontalDragGestures(
+                    onHorizontalDrag = { _, dragAmount ->
+                        offsetX += dragAmount
+                    },
+                    onDragEnd = {
+                        when {
+                            offsetX < -100f -> {
+                                val nextMonth = Calendar.getInstance().apply {
+                                    timeInMillis = selectedDate
+                                    add(Calendar.MONTH, 1)
+                                }
+                                onDateSelected(nextMonth.timeInMillis)
+                            }
+
+                            offsetX > 100f -> {
+                                val previousMonth = Calendar.getInstance().apply {
+                                    timeInMillis = selectedDate
+                                    add(Calendar.MONTH, -1)
+                                }
+                                onDateSelected(previousMonth.timeInMillis)
+                            }
+                        }
+
+                        offsetX = 0f
+                    }
+                )
+            }
     ) {
 
+        // Título del mes
         Text(
-            text = monthName.replaceFirstChar { it.uppercase() },
+            text = monthTitle,
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(bottom = 16.dp),
             color = textColor
         )
 
+        // Encabezado de días de la semana
         LazyVerticalGrid(
             columns = GridCells.Fixed(7),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            userScrollEnabled = false,
+            modifier = Modifier.padding(bottom = 8.dp)
         ) {
-
-            items(days) { date ->
-
-                val isToday = date == DateUtils.todayStart()
-                val isSelected = date == selectedDate
-
-                val hasTasks = pendingTasks.any { task ->
-                    val taskDay = DateUtils.todayStart() + (
-                            (task.dueDate - DateUtils.todayStart()) /
-                                    (24 * 60 * 60 * 1000)
-                            ) * (24 * 60 * 60 * 1000)
-
-                    taskDay == date
-                }
-
+            items(weekDays) { day ->
                 Box(
                     modifier = Modifier
-                        .aspectRatio(1f)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            if (isSelected) colors.highlight else Color.Transparent
-                        )
-                        .border(
-                            width = if (isToday) 2.dp else 0.dp,
-                            color = if (isToday) colors.highlight else Color.Transparent,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .clickable { onDateSelected(date) },
+                        .aspectRatio(1f),
                     contentAlignment = Alignment.Center
                 ) {
-
                     Text(
-                        text = DateUtils.formatDayNumber(date),
+                        text = day,
                         style = MaterialTheme.typography.labelMedium,
                         color = textColor
                     )
+                }
+            }
+        }
 
-                    if (hasTasks) {
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = 4.dp)
-                                .size(5.dp)
-                                .clip(CircleShape)
-                                .background(colors.highlight)
+        // Calendario
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(7),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            userScrollEnabled = false
+        ) {
+
+            items(calendarCells) { day ->
+
+                if (day == null) {
+                    Spacer(
+                        modifier = Modifier.aspectRatio(1f)
+                    )
+                } else {
+                    val dateCalendar = Calendar.getInstance().apply {
+                        clear()
+                        set(Calendar.YEAR, currentYear)
+                        set(Calendar.MONTH, currentMonth)
+                        set(Calendar.DAY_OF_MONTH, day)
+                    }
+
+                    val dateMillis = dateCalendar.timeInMillis
+
+                    val isToday =
+                        today.get(Calendar.YEAR) == currentYear &&
+                                today.get(Calendar.MONTH) == currentMonth &&
+                                today.get(Calendar.DAY_OF_MONTH) == day
+
+                    val isSelected =
+                        Calendar.getInstance().apply {
+                            timeInMillis = selectedDate
+                        }.let {
+                            it.get(Calendar.YEAR) == currentYear &&
+                                    it.get(Calendar.MONTH) == currentMonth &&
+                                    it.get(Calendar.DAY_OF_MONTH) == day
+                        }
+
+                    val backgroundColor =
+                        when {
+                            isSelected -> colors.highlight
+                            else -> Color.Transparent
+                        }
+
+                    Box(
+                        modifier = Modifier
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(backgroundColor)
+                            .border(
+                                width = if (isToday) 2.dp else 0.dp,
+                                color = if (isToday) colors.highlight else Color.Transparent,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .clickable {
+                                onDateSelected(dateMillis)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = day.toString(),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = textColor
                         )
                     }
                 }
@@ -739,6 +847,8 @@ fun TaskDialog(
         mutableStateOf(task?.dueDate ?: DateUtils.todayStart())
     }
 
+    var showInvalidDateSnackbar by remember { mutableStateOf(false) }
+
     Dialog(onDismissRequest = onDismiss) {
 
         var selectedDateMillis by remember { mutableStateOf(task?.dueDate ?: System.currentTimeMillis()) }
@@ -819,14 +929,14 @@ fun TaskDialog(
                                 }
 
                                 val calendar = Calendar.getInstance().apply {
-                                    timeInMillis = selectedDate
+                                    timeInMillis = selectedDateMillis
 
                                     set(Calendar.YEAR, newDate.get(Calendar.YEAR))
                                     set(Calendar.MONTH, newDate.get(Calendar.MONTH))
                                     set(Calendar.DAY_OF_MONTH, newDate.get(Calendar.DAY_OF_MONTH))
                                 }
 
-                                selectedDate = calendar.timeInMillis
+                                selectedDateMillis = calendar.timeInMillis
                             }
                         }
                     )
@@ -838,12 +948,19 @@ fun TaskDialog(
                         onTimeSelected = { hour, minute ->
 
                             val calendar = Calendar.getInstance().apply {
-                                timeInMillis = selectedDate
+                                timeInMillis = selectedDateMillis
                                 set(Calendar.HOUR_OF_DAY, hour)
                                 set(Calendar.MINUTE, minute)
+                                set(Calendar.SECOND, 0)
+                                set(Calendar.MILLISECOND, 0)
                             }
 
-                            selectedDate = calendar.timeInMillis
+                            selectedDateMillis = calendar.timeInMillis
+
+                            selectedTimeText = SimpleDateFormat(
+                                "hh:mm a",
+                                Locale.getDefault()
+                            ).format(Date(selectedDateMillis))
                         }
                     )
                 }
@@ -851,7 +968,32 @@ fun TaskDialog(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 val onSaveTask = {
-                    onSave(title, description, selectedDateMillis, selectedTimeText)
+                    if (selectedDateMillis <= System.currentTimeMillis()) {
+                        showInvalidDateSnackbar = true
+                    } else {
+                        onSave(
+                            title,
+                            description,
+                            selectedDateMillis,
+                            selectedTimeText
+                        )
+                    }
+                }
+
+                if (showInvalidDateSnackbar) {
+                    Snackbar(
+                        action = {
+                            TextButton(
+                                onClick = {
+                                    showInvalidDateSnackbar = false
+                                }
+                            ) {
+                                Text("OK")
+                            }
+                        }
+                    ) {
+                        Text("La fecha y hora seleccionadas deben ser futuras.")
+                    }
                 }
 
                 val onDeleteTask = {

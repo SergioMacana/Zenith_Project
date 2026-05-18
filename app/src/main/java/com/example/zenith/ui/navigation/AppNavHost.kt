@@ -71,6 +71,7 @@ fun AppNavHost(
             HomeScreen(
                 settingsViewModel = settingsViewModel,
                 notificationViewModel = notificationViewModel,
+                taskViewModel = taskViewModel,
                 onGoToMood = {
                     navController.navigate(NavRoutes.Mood.route)
                 },

@@ -19,6 +19,7 @@ import com.example.ui.di.MoodViewModelFactory
 import com.example.ui.di.NotificationViewModelFactory
 import com.example.ui.di.SettingsViewModelFactory
 import com.example.ui.di.ZenithContainer
+import com.example.ui.receivers.TaskReminderScheduler
 import com.example.ui.viewmodel.FitnessViewModel
 import com.example.ui.viewmodel.MoodViewModel
 import com.example.ui.viewmodel.NotificationViewModel
@@ -91,6 +92,7 @@ class MainActivity : ComponentActivity() {
         ReminderScheduler.scheduleDailyMoodReminder(this)
         FitnessReminderScheduler.scheduleMorningReminder(this)
         FitnessReminderScheduler.scheduleHabitReminder(this)
+        TaskReminderScheduler.scheduleDailySummary(this)
     }
 
     private fun requestNotificationPermissionIfNeeded() {

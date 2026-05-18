@@ -36,6 +36,14 @@
             android:exported="false" />
 
         <receiver
+            android:name="com.example.ui.receivers.TaskReminderReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name="com.example.ui.receivers.TaskDailySummaryReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".NotificationCleanupReceiver"
             android:exported="false" />
 

@@ -28,7 +28,9 @@ import com.example.ui.theme.autoText
 @Composable
 fun TaskCard(
     title: String,
-    detail: String
+    detail: String,
+    time: String,
+    onClick: () -> Unit
 ) {
     val colors = LocalZenithColors.current
     val textColor = colors.autoText(colors.accent3)
@@ -50,7 +52,7 @@ fun TaskCard(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp)
+                    .padding(4.dp)
             ) {
                 Column {
 
@@ -75,7 +77,7 @@ fun TaskCard(
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Text(
-                        text = "07:00 am",
+                        text = time,
                         style = MaterialTheme.typography.labelMedium,
                         color = textColor,
                         modifier = Modifier.fillMaxWidth(),
@@ -83,21 +85,18 @@ fun TaskCard(
                     )
                 }
 
-                //
                 Spacer(modifier = Modifier.weight(1f))
 
-                //
                 Button(
-                    onClick = { },
+                    onClick = onClick,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colors.textPrimary,
                         contentColor = colors.accent3
                     ),
-                    modifier = Modifier
-                        .fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = stringResource(R.string.confirm),
+                        text = stringResource(R.string.go),
                         style = MaterialTheme.typography.labelMedium
                     )
                 }

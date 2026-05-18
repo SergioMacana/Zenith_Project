@@ -30,13 +30,9 @@ import com.example.ui.viewmodel.TaskViewModel
 class ZenithContainer(
     context: Context
 ) {
-
     private val appContext = context.applicationContext
 
-    // -------------------------
     // COMMON MANAGERS
-    // -------------------------
-
     private val notificationLocalManager =
         NotificationLocalManager.getInstance(appContext)
 
@@ -46,41 +42,27 @@ class ZenithContainer(
     private val fitnessPrefsManager =
         FitnessPrefsManager(appContext)
 
-    // -------------------------
     // ROOM DATABASE
-    // -------------------------
-
     private val database = ZenithDatabase.getInstance(appContext)
     private val taskDao = database.taskDao()
 
-    // -------------------------
     // TASK DATA
-    // -------------------------
-
-    private val taskRepository: TaskRepository =
+    val taskRepository: TaskRepository =
         TaskRepositoryImpl(taskDao)
 
-    // -------------------------
     // FITNESS DATA
-    // -------------------------
-
     private val fitnessLocalManager = FitnessLocalManager(appContext)
     private val fitnessRepository: FitnessRepository =
         FitnessRepositoryImpl(fitnessLocalManager)
 
-    // -------------------------
     // NOTIFICATION DATA
-    // -------------------------
-
     private val notificationRepository: NotificationRepository =
         NotificationRepositoryImpl(notificationLocalManager)
 
-    // ============================================================
     // TASK VIEWMODEL FACTORY
-    // ============================================================
-
     val taskViewModelFactory = ZenithViewModelFactory {
         TaskViewModel(
+            appContext = appContext,
             createTaskUseCase = CreateTaskUseCase(taskRepository),
             updateTaskUseCase = UpdateTaskUseCase(taskRepository),
             deleteTaskUseCase = DeleteTaskUseCase(taskRepository),
@@ -92,10 +74,7 @@ class ZenithContainer(
         )
     }
 
-    // ============================================================
     // FITNESS VIEWMODEL FACTORY
-    // ============================================================
-
     val fitnessViewModelFactory = ZenithViewModelFactory {
         FitnessViewModel(
             getExercisesUseCase = GetExercisesUseCase(fitnessRepository),

@@ -27,7 +27,7 @@ fun HomeHeader(
     val iconColor = colors.autoText(MaterialTheme.colorScheme.surface)
 
     AppHeader(
-        title = "${stringResource(R.string.welcome_message)} ${settingsState.userName.ifBlank { "Usuario" }}",
+        title = "${stringResource(R.string.welcome_message)} ${settingsState.userName.ifBlank { "Usuario" }}!",
         leftContent = {
             IconButton(onClick = onOpenLeft) {
                 Icon(

@@ -36,11 +36,13 @@ import com.example.ui.theme.LocalZenithColors
 import com.example.ui.theme.autoText
 import com.example.ui.viewmodel.NotificationViewModel
 import com.example.ui.viewmodel.SettingsViewModel
+import com.example.ui.viewmodel.TaskViewModel
 
 @Composable
 fun HomeScreen(
     settingsViewModel: SettingsViewModel,
     notificationViewModel: NotificationViewModel,
+    taskViewModel: TaskViewModel,
     onGoToMood: () -> Unit,
     onGoToTasks: () -> Unit,
     onGoToFitness: () -> Unit
@@ -49,6 +51,7 @@ fun HomeScreen(
     var isRightPanelOpen by remember { mutableStateOf(false) }
 
     val notificationsState by notificationViewModel.notificationsState.collectAsState()
+    val upcomingTasks by taskViewModel.upcomingTasks.collectAsState()
 
     Box(
         modifier = Modifier
@@ -105,7 +108,12 @@ fun HomeScreen(
 
                 item { MoodyCard(onClick = onGoToMood) }
 
-                item { TaskCarousel(onGoToTasks = onGoToTasks) }
+                item {
+                    TaskCarousel(
+                        tasks = upcomingTasks,
+                        onGoToTasks = onGoToTasks
+                    )
+                }
 
                 item { FitnessCard(onClick = onGoToFitness) }
             }

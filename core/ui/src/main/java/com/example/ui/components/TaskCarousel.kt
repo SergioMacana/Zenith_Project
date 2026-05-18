@@ -8,12 +8,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.domain.model.TaskItem
 import com.example.ui.R
 import com.example.ui.screens.SectionTitle
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
-fun TaskCarousel(onGoToTasks: () -> Unit) {
-
+fun TaskCarousel(
+    tasks: List<TaskItem>,
+    onGoToTasks: () -> Unit
+) {
     Column {
         SectionTitle(text = stringResource(R.string.title_card_tasks))
 
@@ -26,16 +32,21 @@ fun TaskCarousel(onGoToTasks: () -> Unit) {
                 NewTaskCard(onGoToTasks = onGoToTasks)
             }
 
-            items(
-                listOf(
-                    "Beber Agua" to "Mantente hidratado",
-                    "Ir de compras" to "No olvidar la comida de Mike"
-                )
-            ) { (title, detail) ->
+            items(tasks) { task ->
+
+                val formattedTime =
+                    task.dueDate?.let { dueDate ->
+                        SimpleDateFormat(
+                            "hh:mm a",
+                            Locale.getDefault()
+                        ).format(Date(dueDate))
+                    } ?: "--:--"
 
                 TaskCard(
-                    title = title,
-                    detail = detail
+                    title = task.title,
+                    detail = task.description,
+                    time = formattedTime,
+                    onClick = onGoToTasks
                 )
             }
         }

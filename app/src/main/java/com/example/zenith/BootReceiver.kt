@@ -3,6 +3,7 @@ package com.example.zenith
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.example.ui.receivers.TaskReminderScheduler
 import com.example.zenith.receivers.FitnessReminderScheduler
 
 class BootReceiver : BroadcastReceiver() {
@@ -10,6 +11,7 @@ class BootReceiver : BroadcastReceiver() {
         ReminderScheduler.scheduleDailyMoodReminder(context)
         FitnessReminderScheduler.scheduleMorningReminder(context)
         FitnessReminderScheduler.scheduleHabitReminder(context)
+        TaskReminderScheduler.scheduleDailySummary(context)
         CleanupScheduler.scheduleDailyCleanup(context)
     }
 }
